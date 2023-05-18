@@ -27,23 +27,16 @@ public class Gui extends JFrame {
     }
 
     private void initPanels() {
+        final Dimension thisFrameSize = this.frameSize;
+        this.mazePanel = new JPanel() {
+            private Dimension frameSize = thisFrameSize;
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(frameSize.width, frameSize.height);
+            }
+        };
         this.buttonPanel = new JPanel();
-//        this.buttonPanel = new JPanel(this) {
-//            private Gui gui;
-//
-//            JPanel(Gui gui) {
-//                this.gui = gui;
-//            }
-//
-//            @Override
-//            public Dimension getPreferredSize() {
-//                Dimension frameSize = gameFrame.getFrameSize();
-//
-//                return new Dimension(frameSize.width, frameSize.height / this.frameHeightFraction);
-//            }
-//        };
         this.buttonPanel.setLayout(new FlowLayout());
-        this.mazePanel = new JPanel();
     }
 
     private void initComponents() {
@@ -67,8 +60,22 @@ public class Gui extends JFrame {
         this.selectButton.addActionListener(listener);
     }
 
-    public void displayMaze() {
-        this.mazePanel.setLayout(new GridLayout(10, 10));
+    public void displayMaze(Cell[][] maze) {
+
+        this.mazePanel.setLayout(new GridLayout(maze.length, maze[0].length));
+
+        for (int i = 0; i < (maze.length * maze[0].length); i++) {
+            JPanel panel = new JPanel();
+
+            // följ ENUM för färger och färglägg panelerna
+
+            this.mazePanel.add(panel);
+
+        }
+
+        this.mazePanel.validate(); // This is important as it refreshes the layout manager
+        this.mazePanel.repaint();  // This makes sure the new components get painted
+
     }
 
 }

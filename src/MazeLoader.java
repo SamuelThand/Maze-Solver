@@ -2,8 +2,8 @@ import java.io.File;
 
 public class MazeLoader {
 
-    public int[][] loadMaze(File mazeImage) {
-        return new int[5][5];
+    public Cell[][] loadMaze(File mazeImage) {
+        return new Cell[5][5];
     }
 
     private void processImage(File mazeImage) {

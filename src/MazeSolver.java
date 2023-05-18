@@ -1,18 +1,18 @@
 public class MazeSolver {
 
-    public int[][] Astar(int[][] maze) {
+    public Cell[][] Astar(Cell[][] maze) {
         //this.maze ....
-        return new int[5][5];
+        return new Cell[5][5];
     }
 
-    public int[][] Djikstras1(int[][] maze) {
+    public Cell[][] Djikstras1(Cell[][] maze) {
         //this.maze ....
-        return new int[5][5];
+        return new Cell[5][5];
     }
 
-    public int[][] Djikstras2(int[][] maze) {
+    public Cell[][] Djikstras2(Cell[][] maze) {
         //this.maze ....
-        return new int[5][5];
+        return new Cell[5][5];
     }
 
 }
