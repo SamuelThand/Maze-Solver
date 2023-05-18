@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 public class Main {
@@ -9,6 +10,8 @@ public class Main {
         var mazeSolver = new MazeSolver(); //TODO Static?
         var gui = new Gui(determineFramSize());
         new Controller(gui, mazeLoader, mazeSolver);
+
+        mazeLoader.loadMaze(new File("src/maze-image3.jpg"));
 
         EventQueue.invokeLater(() -> {
             gui.pack();

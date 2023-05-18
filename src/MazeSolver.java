@@ -1,5 +1,6 @@
 public class MazeSolver {
 
+    // TODO: Store each step taken for replay purposes.
     public int[][] Astar(int[][] maze) {
         //this.maze ....
         return new int[5][5];
