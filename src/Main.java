@@ -1,15 +1,28 @@
+import java.awt.*;
 import java.io.File;
 
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("run");
 
-        //TODO maze generator som laddar en maze
-        //TODO passa maze till en maze solver, som ett game engine
-        //TODO maze solver har metoder för att lösa mazen och returnerar
+        var mazeLoader = new MazeLoader(); //TODO Static?
+        var mazeSolver = new MazeSolver(); //TODO Static?
+        var gui = new Gui(determineFramSize());
+        new Controller(gui, mazeLoader, mazeSolver);
 
-        var maze = new MazeLoader(new File("src/maze-image.jpg"));
+        EventQueue.invokeLater(() -> {
+            gui.pack();
+            gui.setLocationRelativeTo(null);
+            gui.setVisible(true);
+            gui.setSelectButtonListener((event) -> gui.displayMaze()); //TESTING
+        });
+
+
+    }
+
+    private static Dimension determineFramSize() {
+        var screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        return new Dimension(screenSize.width / 2, screenSize.height / 2);
     }
 
 }

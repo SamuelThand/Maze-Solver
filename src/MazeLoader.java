@@ -2,11 +2,6 @@ import java.io.File;
 
 public class MazeLoader {
 
-    public MazeLoader(File mazeImage) {
-
-
-    }
-
     public int[][] loadMaze(File mazeImage) {
         return new int[5][5];
     }
@@ -19,9 +14,5 @@ public class MazeLoader {
         // Generera maze som matrix utifrån deta
         // Gör funktionalitet för att markera start och finish cell och låt användaren sätta ut start och finish i GUI
     }
-
-
-    // class mazegenerator som returnar en matrix
-
 
 }

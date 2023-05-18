@@ -1,22 +1,16 @@
 public class MazeSolver {
 
-    private int[][] maze;
-
-    public MazeSolver(int[][] maze) {
-        this.maze = maze;
-    }
-
-    public int[][] Astar() {
+    public int[][] Astar(int[][] maze) {
         //this.maze ....
         return new int[5][5];
     }
 
-    public int[][] Djikstras1() {
+    public int[][] Djikstras1(int[][] maze) {
         //this.maze ....
         return new int[5][5];
     }
 
-    public int[][] Djikstras2() {
+    public int[][] Djikstras2(int[][] maze) {
         //this.maze ....
         return new int[5][5];
     }
