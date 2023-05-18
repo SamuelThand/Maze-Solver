@@ -5,8 +5,11 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("run");
 
-        var maze = new Maze(new File("src/maze-image.jpg"));
+        //TODO maze generator som laddar en maze
+        //TODO passa maze till en maze solver, som ett game engine
+        //TODO maze solver har metoder för att lösa mazen och returnerar
 
+        var maze = new MazeLoader(new File("src/maze-image.jpg"));
     }
 
 }
