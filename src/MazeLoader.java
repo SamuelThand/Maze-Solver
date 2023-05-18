@@ -56,10 +56,10 @@ public class MazeLoader {
 
         // Define start coordinates for measurements on each side
         int[][] startCoords = {
-                {0, height / 3},
-                {width / 3, 0},
-                {width - 1, height / 3},
-                {width / 3, height - 1}
+                {0, height / 3},  // x-coordinate of left border, direction RIGHT
+                {width / 3, 0},  // y-coordinate of top border, direction DOWN
+                {width - 1, height / 3},  // x-coordinate of right border, direction LEFT
+                {width / 3, height - 1}  // y-coordinate of bottom border, direction UP
         };
         Direction[] directions = {Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP};
 
@@ -69,20 +69,26 @@ public class MazeLoader {
             int[] secondMeasurement;
             do {
                 // Update start coordinates for the second measurement
+                // If direction against the wall is horizontal, move start coordinates along the vertical axis
                 startCoords[i][0] += (directions[i] == Direction.UP || directions[i] == Direction.DOWN) ? height / 6 : 0;
+                // If direction against the wall is vertical, move start coordinates along the horizontal axis
                 startCoords[i][1] += (directions[i] == Direction.LEFT || directions[i] == Direction.RIGHT) ? width / 6 : 0;
 
                 secondMeasurement = findFirstWall(image, directions[i], startCoords[i]);
+
+                // Continue until the first and second measurement are the same
+                // i 0 and 2 are x-coordinate measures, 1 and 3 are y-coordinate measures
             } while (firstMeasurement[i % 2] != secondMeasurement[i % 2]);
 
             measurements[i] = firstMeasurement;
         }
 
-        // Determine the coordinates to crop the image
-        int x = Math.min(measurements[0][0], measurements[2][0]);
-        int y = Math.min(measurements[1][1], measurements[3][1]);
-        int w = Math.max(measurements[2][0], measurements[0][0]) - x;
-        int h = Math.max(measurements[3][1], measurements[1][1]) - y;
+        // Determine the start coordinates to crop the image
+        int x = measurements[0][0];  // x-coordinate of left border, direction RIGHT
+        int y = measurements[1][1];  // y-coordinate of top border, direction DOWN
+        // Determine the width and height of the cropped image
+        int w = measurements[2][0] - x;  // offset from left border to right border
+        int h = measurements[3][1] - y;  // offset from top border to bottom border
 
         // Crop the image and return it
         return image.getSubimage(x, y, w+1, h+1);
