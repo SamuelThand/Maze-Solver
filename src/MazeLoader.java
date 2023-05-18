@@ -10,7 +10,7 @@ public class MazeLoader {
         UP, DOWN, LEFT, RIGHT
     }
 
-    public int[][] loadMaze(File mazeImage) {
+    public Cell[][] loadMaze(File mazeImage) {
         BufferedImage bImage = this.processImage(mazeImage);
         return null;
     }
