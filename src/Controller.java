@@ -1,8 +1,8 @@
 public class Controller {
 
-    private Gui gui;
-    private MazeLoader loader;
-    private MazeSolver solver;
+    private final Gui gui;
+    private final MazeLoader loader;
+    private final MazeSolver solver;
 
     public Controller(Gui gui, MazeLoader loader, MazeSolver solver) {
         this.gui = gui;

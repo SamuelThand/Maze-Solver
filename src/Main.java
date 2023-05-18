@@ -1,5 +1,5 @@
 import java.awt.*;
-import java.io.File;
+import java.util.Random;
 
 public class Main {
 
@@ -14,7 +14,7 @@ public class Main {
             gui.pack();
             gui.setLocationRelativeTo(null);
             gui.setVisible(true);
-            gui.setSelectButtonListener((event) -> gui.displayMaze()); //TESTING
+            gui.setSelectButtonListener((event) -> gui.displayMaze(generateTestMaze(100))); //TESTING
         });
 
 
@@ -23,6 +23,19 @@ public class Main {
     private static Dimension determineFramSize() {
         var screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         return new Dimension(screenSize.width / 2, screenSize.height / 2);
+    }
+
+    private static Cell[][] generateTestMaze(int size) {
+        Cell[][] maze = new Cell[size][size];
+        var random = new Random();
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                maze[i][j] = random.nextBoolean() ? Cell.TRAVERSABLE : Cell.WALL;
+            }
+        }
+
+        return maze;
     }
 
 }

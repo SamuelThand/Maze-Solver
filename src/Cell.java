@@ -3,5 +3,7 @@ public enum Cell {
     WALL,
     DEAD_END,
     VISITED,
-    PATH
+    PATH,
+    START,
+    FINISH
 }
