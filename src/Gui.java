@@ -13,11 +13,12 @@ public class Gui extends JFrame {
     private JButton aStarButton;
     private JButton dijkstraButton;
     private JButton dijkstraButton2;
-    private JButton[][] graphicalMaze;
+    private Cell[][] mazeModel; //TODO refactor to backend? Get from backend via controller instead
+    private JButton[][] interactiveMaze;
 
     Gui(final Dimension frameSize) {
         this.frameSize = frameSize;
-        this.graphicalMaze = null;
+        this.interactiveMaze = null;
         this.initFrame();
         this.initPanels();
         this.initComponents();
@@ -73,20 +74,12 @@ public class Gui extends JFrame {
 
         this.mazePanel.removeAll();
         this.mazePanel.setLayout(new GridLayout(maze.length, maze[0].length));
-        this.graphicalMaze = new JButton[maze.length][maze[0].length];
+        this.interactiveMaze = new JButton[maze.length][maze[0].length];
 
         for (int row = 0; row < maze.length; row++)
             for (int col = 0; col < maze[0].length; col++) {
                 var button = new JButton();
-
-                button.setBackground(switch (maze[row][col]) {
-                    case TRAVERSABLE -> Color.WHITE;
-                    case WALL -> Color.BLACK;
-                    case DEAD_END -> Color.RED;
-                    case VISITED -> Color.BLUE;
-                    case PATH -> Color.GREEN;
-                    default -> throw new IllegalStateException("Unexpected value: " + maze[row][col]);
-                });
+                button.setBackground(translateStateToColor(maze[row][col]));
                 button.setBorderPainted(false);  // Do not paint the border
                 button.setContentAreaFilled(true);  // Fill the content area with the background color
 
@@ -100,15 +93,35 @@ public class Gui extends JFrame {
 
                 });
 
-                this.graphicalMaze[row][col] = button;
+                this.interactiveMaze[row][col] = button;
                 this.mazePanel.add(button);
             }
 
+        this.mazeModel = maze;
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
 
+    private void repaintMaze() {
+        for (int row = 0; row < this.mazeModel.length; row++)
+            for (int col = 0; col < this.mazeModel[0].length; col++)
+                this.interactiveMaze[row][col].setBackground(translateStateToColor(this.mazeModel[row][col]));
+    }
+
+    private static Color translateStateToColor(Cell cell) {
+        return switch (cell) {
+            case TRAVERSABLE -> Color.WHITE;
+            case WALL -> Color.BLACK;
+            case DEAD_END -> Color.RED;
+            case VISITED -> Color.BLUE;
+            case PATH -> Color.GREEN;
+            case START -> Color.ORANGE;
+            case FINISH -> Color.CYAN;
+        };
+    }
+
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
+        this.repaintMaze();
         var worker = new SwingWorker<Void, MazeTraversalStep>() {
             @Override
             protected Void doInBackground() {
@@ -126,15 +139,7 @@ public class Gui extends JFrame {
             @Override
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
-                    graphicalMaze[step.row()][step.col()].setBackground(switch (step.newState()) {
-                        case TRAVERSABLE -> Color.WHITE;
-                        case WALL -> Color.BLACK;
-                        case DEAD_END -> Color.RED;
-                        case VISITED -> Color.BLUE;
-                        case PATH -> Color.GREEN;
-                        case START -> Color.ORANGE;
-                        case FINISH -> Color.CYAN;
-                    });
+                    interactiveMaze[step.row()][step.col()].setBackground(translateStateToColor(step.newState()));
                 }
             }
         };
