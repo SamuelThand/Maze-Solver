@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
@@ -14,11 +15,22 @@ public class Gui extends JFrame {
     private JButton dijkstraButton;
     private JButton dijkstraButton2;
     private Cell[][] mazeModel; //TODO refactor to backend? Get from backend via controller instead
-    private JButton[][] interactiveMaze;
+    private JButton[][] graphicalMaze;
+    private ArrayList<JButton> interactiveMazeCells;
+    private JButton startButton;
+    private JButton finishButton;
+    private enum State {
+        NONE_SELECTED, START_SELECTED, FINISH_SELECTED, BOTH_SELECTED
+    }
+    private State currentState;
 
     Gui(final Dimension frameSize) {
         this.frameSize = frameSize;
-        this.interactiveMaze = null;
+        this.graphicalMaze = null;
+        this.startButton = null;
+        this.finishButton = null;
+        this.currentState = State.NONE_SELECTED;
+        this.interactiveMazeCells = new ArrayList<>();
         this.initFrame();
         this.initPanels();
         this.initComponents();
@@ -71,10 +83,13 @@ public class Gui extends JFrame {
     }
 
     public void displayMaze(Cell[][] maze) {
+        this.currentState = State.NONE_SELECTED;
+        this.startButton = null;
+        this.finishButton = null;
 
         this.mazePanel.removeAll();
         this.mazePanel.setLayout(new GridLayout(maze.length, maze[0].length));
-        this.interactiveMaze = new JButton[maze.length][maze[0].length];
+        this.graphicalMaze = new JButton[maze.length][maze[0].length];
 
         for (int row = 0; row < maze.length; row++)
             for (int col = 0; col < maze[0].length; col++) {
@@ -83,17 +98,57 @@ public class Gui extends JFrame {
                 button.setBorderPainted(false);  // Do not paint the border
                 button.setContentAreaFilled(true);  // Fill the content area with the background color
 
-                // Add action listener to the button
-                button.addActionListener(e -> {
-                    button.setBackground(Color.ORANGE);
-
-                    //TODO Skicka startposition/slutposition till controller
-                    //TODO Byt färg för start och stopp-position och gör alla celler icke klickbara om man
-                    // inte togglar ur någon av de
-
+                if (maze[row][col] == Cell.WALL)
+                    button.setEnabled(false);
+                else
+                    this.interactiveMazeCells.add(button);
+                    button.addActionListener(e -> {
+                        switch (this.currentState) {
+                            case NONE_SELECTED:
+                                button.setBackground(translateStateToColor(Cell.START));
+                                this.startButton = button;
+                                this.currentState = State.START_SELECTED;
+                                break;
+                            case START_SELECTED:
+                                if (button == this.startButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.startButton = null;
+                                    this.currentState = State.NONE_SELECTED;
+                                } else {
+                                    button.setBackground(translateStateToColor(Cell.FINISH));
+                                    this.finishButton = button;
+                                    this.currentState = State.BOTH_SELECTED;
+                                    this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                }
+                                break;
+                            case FINISH_SELECTED:
+                                if (button == this.finishButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.finishButton = null;
+                                    this.currentState = State.NONE_SELECTED;
+                                } else {
+                                    button.setBackground(translateStateToColor(Cell.START));
+                                    this.startButton = button;
+                                    this.currentState = State.BOTH_SELECTED;
+                                    this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                }
+                                break;
+                            case BOTH_SELECTED:
+                                if (button == this.startButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.startButton = null;
+                                    this.currentState = State.FINISH_SELECTED;
+                                    this.setInteractiveMazeCells(true, this.finishButton);
+                                } else if (button == this.finishButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.finishButton = null;
+                                    this.currentState = State.START_SELECTED;
+                                    this.setInteractiveMazeCells(true, this.startButton);
+                                }
+                        }
                 });
 
-                this.interactiveMaze[row][col] = button;
+                this.graphicalMaze[row][col] = button;
                 this.mazePanel.add(button);
             }
 
@@ -105,7 +160,7 @@ public class Gui extends JFrame {
     private void repaintMaze() {
         for (int row = 0; row < this.mazeModel.length; row++)
             for (int col = 0; col < this.mazeModel[0].length; col++)
-                this.interactiveMaze[row][col].setBackground(translateStateToColor(this.mazeModel[row][col]));
+                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.mazeModel[row][col]));
     }
 
     private static Color translateStateToColor(Cell cell) {
@@ -127,10 +182,19 @@ public class Gui extends JFrame {
         this.dijkstraButton2.setEnabled(value);
     }
 
-    private void setInteractiveMazeCells(Boolean value) {
-        for (JButton[] buttons : this.interactiveMaze)
-            for (JButton button : buttons)
+    private void setInteractiveMazeCells(Boolean value, JButton... exceptions) {
+        for (JButton button : this.interactiveMazeCells)
+            if (!containsButton(button, exceptions))
                 button.setEnabled(value);
+    }
+
+    private static boolean containsButton(JButton button, JButton... exceptions) {
+        for (JButton exception : exceptions) {
+            if (button == exception) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
@@ -154,7 +218,7 @@ public class Gui extends JFrame {
             @Override
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
-                    interactiveMaze[step.row()][step.col()].setBackground(translateStateToColor(step.newState()));
+                    graphicalMaze[step.row()][step.col()].setBackground(translateStateToColor(step.newState()));
                 }
             }
 
