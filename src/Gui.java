@@ -120,8 +120,23 @@ public class Gui extends JFrame {
         };
     }
 
+    private void setButtonStates(Boolean value) {
+        this.selectButton.setEnabled(value);
+        this.aStarButton.setEnabled(value);
+        this.dijkstraButton.setEnabled(value);
+        this.dijkstraButton2.setEnabled(value);
+    }
+
+    private void setInteractiveMazeCells(Boolean value) {
+        for (JButton[] buttons : this.interactiveMaze)
+            for (JButton button : buttons)
+                button.setEnabled(value);
+    }
+
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
         this.repaintMaze();
+        this.setButtonStates(false);
+        this.setInteractiveMazeCells(false);
         var worker = new SwingWorker<Void, MazeTraversalStep>() {
             @Override
             protected Void doInBackground() {
@@ -141,6 +156,11 @@ public class Gui extends JFrame {
                 for (MazeTraversalStep step : chunks) {
                     interactiveMaze[step.row()][step.col()].setBackground(translateStateToColor(step.newState()));
                 }
+            }
+
+            @Override
+            protected void done() {
+                setButtonStates(true);
             }
         };
 
