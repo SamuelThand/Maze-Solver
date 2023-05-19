@@ -17,7 +17,8 @@ public class Main {
             gui.pack();
             gui.setLocationRelativeTo(null);
             gui.setVisible(true);
-            gui.setSelectButtonListener((event) -> gui.displayMaze(generateTestMaze(100))); //TESTING
+            gui.setSelectButtonListener((event) -> gui.displayMaze(Testing.generateTestMaze(50))); //TESTING
+            gui.setAstarButtonListener((event) -> gui.replaySearchProcedure(Testing.generateTraversalSteps(50))); //TESTING
         });
 
 
@@ -28,17 +29,6 @@ public class Main {
         return new Dimension(screenSize.width / 2, screenSize.height / 2);
     }
 
-    private static Cell[][] generateTestMaze(int size) {
-        Cell[][] maze = new Cell[size][size];
-        var random = new Random();
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                maze[i][j] = random.nextBoolean() ? Cell.TRAVERSABLE : Cell.WALL;
-            }
-        }
-
-        return maze;
-    }
 
 }

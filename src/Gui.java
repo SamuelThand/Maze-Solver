@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Queue;
 
 public class Gui extends JFrame {
@@ -33,6 +34,7 @@ public class Gui extends JFrame {
         final Dimension thisFrameSize = this.frameSize;
         this.mazePanel = new JPanel() {
             private final Dimension frameSize = thisFrameSize;
+
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(frameSize.width, frameSize.height);
@@ -61,6 +63,10 @@ public class Gui extends JFrame {
 
     public void setSelectButtonListener(ActionListener listener) {
         this.selectButton.addActionListener(listener);
+    }
+
+    public void setAstarButtonListener(ActionListener listener) {
+        this.aStarButton.addActionListener(listener);
     }
 
     public void displayMaze(Cell[][] maze) {
@@ -103,7 +109,36 @@ public class Gui extends JFrame {
     }
 
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
-        //TODO take steps and replay them by changing the colors in the graphical maze based on the new state.
-    }
+        var worker = new SwingWorker<Void, MazeTraversalStep>() {
+            @Override
+            protected Void doInBackground() {
+                for (MazeTraversalStep step : steps) {
+                    try {
+                        Thread.sleep(5); // Sleep for 100 milliseconds
+                        publish(step);     // Send the step to the process method
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt(); // Restore the interrupted status
+                    }
+                }
+                return null;
+            }
 
+            @Override
+            protected void process(List<MazeTraversalStep> chunks) {
+                for (MazeTraversalStep step : chunks) {
+                    graphicalMaze[step.row()][step.col()].setBackground(switch (step.newState()) {
+                        case TRAVERSABLE -> Color.WHITE;
+                        case WALL -> Color.BLACK;
+                        case DEAD_END -> Color.RED;
+                        case VISITED -> Color.BLUE;
+                        case PATH -> Color.GREEN;
+                        case START -> Color.ORANGE;
+                        case FINISH -> Color.CYAN;
+                    });
+                }
+            }
+        };
+
+        worker.execute();
+    }
 }
