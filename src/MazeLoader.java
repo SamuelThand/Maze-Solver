@@ -1,27 +1,154 @@
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 public class MazeLoader {
 
+    private static final int WALL_COLOR = -16000000;
     private enum Direction {
         UP, DOWN, LEFT, RIGHT
     }
 
     public Cell[][] loadMaze(File mazeImage) {
         BufferedImage bImage = this.processImage(mazeImage);
-        return null;
+        int pathSize = findSmallestContinuousWhite(bImage);
+
+        int width = bImage.getWidth();
+        int height = bImage.getHeight();
+
+        Cell[][] maze = new Cell[height][width];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                maze[y][x] = isNotWall(bImage.getRGB(x, y)) ? Cell.TRAVERSABLE : Cell.WALL;
+            }
+        }
+
+        maze = reduceMaze(maze, pathSize);
+
+        try (PrintWriter writer = new PrintWriter(new File("src/maze.txt"))) {
+            for (Cell[] cells : maze) {
+                writer.println(Arrays.toString(cells));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return maze;
     }
 
+    private Cell[][] reduceMaze(Cell[][] maze, int pathSize) {
+        // Spara 2 rader, sedan hoppa över 
+        int height = maze.length;
+        int width = maze[0].length;
+        int removeSize = pathSize + 1;
+        Cell[][] reducedMaze = new Cell[(height / pathSize * 2)][];
+        int j = 0;
+
+        for (int i = 0; i < height; i += removeSize) {
+            reducedMaze[j] = reduceCellByInterval(maze[i], removeSize);
+            if (i + 1 < height) {
+                reducedMaze[j + 1] = reduceCellByInterval(maze[i + 1], removeSize);
+            }
+            j += 2;
+        }
+
+        return reducedMaze;
+    }
+
+    private Cell[] reduceCellByInterval(Cell[] row, int interval) {
+        int width = row.length;
+        Cell[] reducedMaze = new Cell[(width / interval * 2) + 1];
+        int j = 0;
+
+        for (int i = 0; i < width; i += interval) {
+            reducedMaze[j] = row[i];
+            if (i + 1 < width) {
+                reducedMaze[j + 1] = row[i + 1];
+            }
+            j += 2;
+        }
+
+        return reducedMaze;
+    }
+
+    public static int findSmallestContinuousWhite(BufferedImage image) {
+        int smallestWhite = Integer.MAX_VALUE;
+        int currentWhite = 0;
+        int width = image.getWidth();
+        int height = image.getHeight();
+        boolean foundWhite = false;
+
+        // Iterate over the top edge (left to right)
+        for (int i = 0; i < width; i++) {
+            if (isNotWall(image.getRGB(i, 0)) && i != width - 1) {
+                currentWhite++;
+                foundWhite = true;
+            } else {
+                if (foundWhite && currentWhite > 1) {
+                    smallestWhite = Math.min(smallestWhite, currentWhite);
+                    foundWhite = false;
+                }
+                currentWhite = 0;
+            }
+        }
+
+        // Iterate over the right edge (top to bottom)
+        for (int i = 0; i < height; i++) {
+            if (isNotWall(image.getRGB(width - 1, i)) && i != height - 1) {
+                currentWhite++;
+                foundWhite = true;
+            } else {
+                if (foundWhite && currentWhite > 1) {
+                    smallestWhite = Math.min(smallestWhite, currentWhite);
+                    foundWhite = false;
+                }
+                currentWhite = 0;
+            }
+        }
+
+        // Iterate over the bottom edge (right to left)
+        for (int i = width - 1; i >= 0; i--) {
+            if (isNotWall(image.getRGB(i, height - 1)) && i != 0) {
+                currentWhite++;
+                foundWhite = true;
+            } else {
+                if (foundWhite && currentWhite > 1) {
+                    smallestWhite = Math.min(smallestWhite, currentWhite);
+                    foundWhite = false;
+                }
+                currentWhite = 0;
+            }
+        }
+
+        // Iterate over the left edge (bottom to top)
+        for (int i = height - 1; i >= 0; i--) {
+            if (isNotWall(image.getRGB(0, i)) && i != 0) {
+                currentWhite++;
+                foundWhite = true;
+            } else {
+                if (foundWhite && currentWhite > 1) {
+                    smallestWhite = Math.min(smallestWhite, currentWhite);
+                    foundWhite = false;
+                }
+                currentWhite = 0;
+            }
+        }
+
+        System.out.println("Found path size of: " + smallestWhite);
+        return smallestWhite;
+    }
+
+    private static boolean isNotWall(int color) {
+        return color > WALL_COLOR;
+    }
+
+
     private BufferedImage processImage(File mazeImage) {
-        // TODO ide:
-        // Ta bort vita mellanrummet utanför labyrinten genom att räkna antal rader och kolumner tills den slår i svart
-        // Ignorera rött och grönt
-        // Ta resultatlabyrinten med svart border och downscalea så att pathsen bara blir 1 pixel och väggar 1 pixel
-        // Generera maze som matrix utifrån deta
-        // Gör funktionalitet för att markera start och finish cell och låt användaren sätta ut start och finish i GUI
         BufferedImage image = null;
         try {
             // Load the image
@@ -29,10 +156,8 @@ public class MazeLoader {
 
             // Process the image
             image = removeBorders(image);
-
-            // Save the image
+            // Save the image, for demonstration purposes only
             ImageIO.write(image, "jpg", new File("src/new-maze.jpg"));
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,8 +231,7 @@ public class MazeLoader {
     private int[] findFirstWall(BufferedImage image, Direction direction, int[] startCoords) {
         while (startCoords[0] >= 0 && startCoords[0] < image.getWidth() &&
                 startCoords[1] >= 0 && startCoords[1] < image.getHeight() &&
-                image.getRGB(startCoords[0], startCoords[1]) > -1000000) {
-            System.out.println(image.getRGB(startCoords[0], startCoords[1]));
+                image.getRGB(startCoords[0], startCoords[1]) > WALL_COLOR) { // Threshold set close to black
             switch (direction) {
                 case UP -> startCoords[1] -= 1;
                 case DOWN -> startCoords[1] += 1;

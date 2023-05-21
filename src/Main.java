@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Main {
@@ -11,7 +12,10 @@ public class Main {
         var gui = new Gui(determineFramSize());
         new Controller(gui, mazeLoader, mazeSolver);
 
-        mazeLoader.loadMaze(new File("src/maze-image3.jpg"));
+        Cell[][] maze = mazeLoader.loadMaze(new File("src/maze-image2.jpg"));
+        for (Cell[] cells : maze) {
+            System.out.println(Arrays.toString(cells));
+        }
 
         EventQueue.invokeLater(() -> {
             gui.pack();
@@ -32,11 +36,11 @@ public class Main {
         Cell[][] maze = new Cell[size][size];
         var random = new Random();
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                maze[i][j] = random.nextBoolean() ? Cell.TRAVERSABLE : Cell.WALL;
-            }
-        }
+//        for (int i = 0; i < size; i++) {
+//            for (int j = 0; j < size; j++) {
+//                maze[i][j] = random.nextBoolean() ? Cell.TRAVERSABLE : Cell.WALL;
+//            }
+//        }
 
         return maze;
     }
