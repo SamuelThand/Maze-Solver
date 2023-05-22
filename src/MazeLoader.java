@@ -9,10 +9,16 @@ import java.util.Arrays;
 public class MazeLoader {
 
     private static final int WALL_COLOR = -16000000;
+
     private enum Direction {
         UP, DOWN, LEFT, RIGHT
     }
 
+    /**
+     * Load the maze image into a 2D array representation of the maze.
+     * @param mazeImage image of the maze
+     * @return 2D array of cells
+     */
     public Cell[][] loadMaze(File mazeImage) {
         BufferedImage bImage = this.processImage(mazeImage);
         int pathSize = findSmallestContinuousWhite(bImage);
@@ -22,6 +28,7 @@ public class MazeLoader {
 
         Cell[][] maze = new Cell[height][width];
 
+        // Create an array of cells that represents the full scale maze.
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 maze[y][x] = isNotWall(bImage.getRGB(x, y)) ? Cell.TRAVERSABLE : Cell.WALL;
@@ -30,6 +37,7 @@ public class MazeLoader {
 
         maze = reduceMaze(maze, pathSize);
 
+        // TODO: Remove when no text representation of maze is needed
         try (PrintWriter writer = new PrintWriter(new File("src/maze.txt"))) {
             for (Cell[] cells : maze) {
                 writer.println(Arrays.toString(cells));
@@ -41,39 +49,78 @@ public class MazeLoader {
         return maze;
     }
 
+    /**
+     * Reduces the full scale maze array to a compressed version where the path and wall is only one cell wide.
+     *
+     * @param maze full scale representation of the maze
+     * @param pathSize
+     * @return
+     */
     private Cell[][] reduceMaze(Cell[][] maze, int pathSize) {
-        // Spara 2 rader, sedan hoppa över 
         int height = maze.length;
         int width = maze[0].length;
-        int removeSize = pathSize + 1;
-        Cell[][] reducedMaze = new Cell[(height / pathSize * 2)][];
+        int skipSize = pathSize + 1;
+        int reducedHeight = (height / pathSize) * 2 + 1;
+        int reducedWidth = (width / pathSize) * 2 + 1;
+
+
+        Cell[][] tempMaze = new Cell[reducedHeight][];
+
         int j = 0;
 
-        for (int i = 0; i < height; i += removeSize) {
-            reducedMaze[j] = reduceCellByInterval(maze[i], removeSize);
+        for (int i = 0; i < height; i += skipSize) {
+            tempMaze[j] = reduceCellByInterval(maze[i], skipSize, reducedWidth);
             if (i + 1 < height) {
-                reducedMaze[j + 1] = reduceCellByInterval(maze[i + 1], removeSize);
+                tempMaze[j + 1] = reduceCellByInterval(maze[i + 1], skipSize, reducedWidth);
+                j++;
             }
-            j += 2;
+            j++;
+        }
+
+        // Compensation for rounding scaled height problem.
+        // If the last value is null, remove all null values from the end by
+        // creating a smaller array.
+        Cell[][] reducedMaze = new Cell[j][];
+
+        if (tempMaze[reducedHeight - 1] == null) {
+            for (int i = 0; i < reducedHeight; i++) {
+                if (tempMaze[i] != null) {
+                    reducedMaze[i] = tempMaze[i];
+                }
+            }
         }
 
         return reducedMaze;
     }
 
-    private Cell[] reduceCellByInterval(Cell[] row, int interval) {
+    private Cell[] reduceCellByInterval(Cell[] row, int pathSize, int reducedWidth) {
         int width = row.length;
-        Cell[] reducedMaze = new Cell[(width / interval * 2) + 1];
+        Cell[] tempRow = new Cell[reducedWidth];
         int j = 0;
 
-        for (int i = 0; i < width; i += interval) {
-            reducedMaze[j] = row[i];
+        for (int i = 0; i < width; i += pathSize) {
+            tempRow[j] = row[i];
             if (i + 1 < width) {
-                reducedMaze[j + 1] = row[i + 1];
+                tempRow[j + 1] = row[i + 1];
+                j++;
             }
-            j += 2;
+            j++;
         }
 
-        return reducedMaze;
+        // Compensation for rounding scaled width problem.
+        // If the last value is null, remove all null values from the end by
+        // creating a smaller array.
+        Cell[] reducedRow = new Cell[j];
+
+        if (tempRow[reducedWidth - 1] == null) {
+            for (int i = 0; i < reducedWidth; i++) {
+                if (tempRow[i] != null) {
+                    reducedRow[i] = tempRow[i];
+                }
+            }
+        }
+
+        return reducedRow;
     }
 
     public static int findSmallestContinuousWhite(BufferedImage image) {
@@ -216,15 +263,15 @@ public class MazeLoader {
         int h = measurements[3][1] - y;  // offset from top border to bottom border
 
         // Crop the image and return it
-        return image.getSubimage(x, y, w+1, h+1);
+        return image.getSubimage(x, y, w + 1, h + 1);
     }
 
 
     /**
      * Iterate through the image from the given start coordinates towards the given direction.
      *
-     * @param image to search through
-     * @param direction towards the middle of the image
+     * @param image       to search through
+     * @param direction   towards the middle of the image
      * @param startCoords to begin at
      * @return the coordinates of the first wall (not white pixel) found
      */
