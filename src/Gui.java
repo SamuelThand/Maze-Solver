@@ -1,9 +1,11 @@
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.io.File;
+import java.util.*;
 import java.util.List;
-import java.util.Queue;
+import java.util.function.Function;
 
 public class Gui extends JFrame {
 
@@ -12,13 +14,17 @@ public class Gui extends JFrame {
     private JPanel mazePanel;
     private JButton selectButton;
     private JButton aStarButton;
-    private JButton dijkstraButton;
-    private JButton dijkstraButton2;
-    private Cell[][] mazeModel; //TODO refactor to backend? Get from backend via controller instead
+    private JButton djikstraButton;
+    private JButton djikstraButton2;
+    private Cell[][] originalMaze; //TODO refactor to backend? Get from backend via controller instead
     private JButton[][] graphicalMaze;
     private ArrayList<JButton> interactiveMazeCells;
+    private Map<JButton, Coordinate> buttonCoordinateMap = new HashMap<>();
     private JButton startButton;
     private JButton finishButton;
+    private Coordinate startCoordinate;
+    private Coordinate finishCoordinate;
+
     private enum State {
         NONE_SELECTED, START_SELECTED, FINISH_SELECTED, BOTH_SELECTED
     }
@@ -60,15 +66,18 @@ public class Gui extends JFrame {
     private void initComponents() {
         this.selectButton = new JButton("Select Maze");
         this.aStarButton = new JButton("A*");
-        this.dijkstraButton = new JButton("Dijkstra");
-        this.dijkstraButton2 = new JButton("Dijkstra");
+        this.djikstraButton = new JButton("Dijkstra");
+        this.djikstraButton2 = new JButton("Dijkstra");
+
+        this.setButtonStates(false);
+        this.selectButton.setEnabled(true);
     }
 
     private void build() {
         this.buttonPanel.add(this.selectButton);
         this.buttonPanel.add(this.aStarButton);
-        this.buttonPanel.add(this.dijkstraButton);
-        this.buttonPanel.add(this.dijkstraButton2);
+        this.buttonPanel.add(this.djikstraButton);
+        this.buttonPanel.add(this.djikstraButton2);
 
         this.add(this.buttonPanel, BorderLayout.NORTH);
         this.add(this.mazePanel, BorderLayout.SOUTH);
@@ -80,6 +89,22 @@ public class Gui extends JFrame {
 
     public void setAstarButtonListener(ActionListener listener) {
         this.aStarButton.addActionListener(listener);
+    }
+
+    public void setDjikstraButtonListener(ActionListener listener) {
+        this.djikstraButton.addActionListener(listener);
+    }
+
+    public void setDjikstraButton2Listener(ActionListener listener) {
+        this.djikstraButton2.addActionListener(listener);
+    }
+
+    public Coordinate getStartCoordinate() {
+        return buttonCoordinateMap.get(this.startButton);
+    }
+
+    public Coordinate getFinishCoordinate() {
+        return buttonCoordinateMap.get(this.finishButton);
     }
 
     public void displayMaze(Cell[][] maze) {
@@ -119,6 +144,7 @@ public class Gui extends JFrame {
                                     this.finishButton = button;
                                     this.currentState = State.BOTH_SELECTED;
                                     this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                    this.setButtonStates(true, this.selectButton);
                                 }
                                 break;
                             case FINISH_SELECTED:
@@ -131,6 +157,7 @@ public class Gui extends JFrame {
                                     this.startButton = button;
                                     this.currentState = State.BOTH_SELECTED;
                                     this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                    this.setButtonStates(true, this.selectButton);
                                 }
                                 break;
                             case BOTH_SELECTED:
@@ -139,28 +166,31 @@ public class Gui extends JFrame {
                                     this.startButton = null;
                                     this.currentState = State.FINISH_SELECTED;
                                     this.setInteractiveMazeCells(true, this.finishButton);
+                                    this.setButtonStates(false, this.selectButton);
                                 } else if (button == this.finishButton) {
                                     button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
                                     this.finishButton = null;
                                     this.currentState = State.START_SELECTED;
                                     this.setInteractiveMazeCells(true, this.startButton);
+                                    this.setButtonStates(false, this.selectButton);
                                 }
                         }
                 });
 
                 this.graphicalMaze[row][col] = button;
+                buttonCoordinateMap.put(button, new Coordinate(row, col));
                 this.mazePanel.add(button);
             }
 
-        this.mazeModel = maze;
+        this.originalMaze = maze;
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
 
     private void repaintMaze() {
-        for (int row = 0; row < this.mazeModel.length; row++)
-            for (int col = 0; col < this.mazeModel[0].length; col++)
-                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.mazeModel[row][col]));
+        for (int row = 0; row < this.originalMaze.length; row++)
+            for (int col = 0; col < this.originalMaze[0].length; col++)
+                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.originalMaze[row][col]));
     }
 
     private static Color translateStateToColor(Cell cell) {
@@ -175,11 +205,15 @@ public class Gui extends JFrame {
         };
     }
 
-    private void setButtonStates(Boolean value) {
-        this.selectButton.setEnabled(value);
-        this.aStarButton.setEnabled(value);
-        this.dijkstraButton.setEnabled(value);
-        this.dijkstraButton2.setEnabled(value);
+    private void setButtonStates(Boolean value, JButton... exceptions) {
+        if (!containsButton(this.selectButton, exceptions))
+            this.selectButton.setEnabled(value);
+        if (!containsButton(this.aStarButton, exceptions))
+            this.aStarButton.setEnabled(value);
+        if (!containsButton(this.djikstraButton, exceptions))
+            this.djikstraButton.setEnabled(value);
+        if (!containsButton(this.djikstraButton2, exceptions))
+            this.djikstraButton2.setEnabled(value);
     }
 
     private void setInteractiveMazeCells(Boolean value, JButton... exceptions) {
@@ -197,7 +231,20 @@ public class Gui extends JFrame {
         return false;
     }
 
+    public void filePicker(Function<File, Void> callback) {
+//        var path = "src/maze-image.jpg"; //TODO extract path from picker function
+        var picker = new JFileChooser();
+        picker.setCurrentDirectory(new File("resources/mazes"));
+        picker.setFileFilter(new FileNameExtensionFilter("JPG files", "jpg"));
+
+        if (picker.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+            callback.apply(new File(picker.getSelectedFile().getAbsolutePath()));
+    }
+
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
+
+        //TODO increment a counter in the gui for each executed step
+
         this.repaintMaze();
         this.setButtonStates(false);
         this.setInteractiveMazeCells(false);
@@ -218,7 +265,7 @@ public class Gui extends JFrame {
             @Override
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
-                    graphicalMaze[step.row()][step.col()].setBackground(translateStateToColor(step.newState()));
+                    graphicalMaze[step.coordinate().row()][step.coordinate().col()].setBackground(translateStateToColor(step.newState()));
                 }
             }
 
