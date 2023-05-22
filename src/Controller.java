@@ -1,5 +1,3 @@
-import java.io.File;
-
 public class Controller {
 
     private final Gui gui;
@@ -14,24 +12,26 @@ public class Controller {
     }
 
     private void setButtonListeners() {
-//        this.gui.setSelectButtonListener((event) -> this.gui.displayMaze(Testing.generateTestMaze(50))); //TESTING
-//        this.gui.setAstarButtonListener((event) -> this.gui.replaySearchProcedure(Testing.generateTraversalSteps(50))); //TESTING
-
         this.gui.setSelectButtonListener(
                 (event) -> this.gui.filePicker(
                     (file) -> {
-                        this.gui.displayMaze(this.loader.loadMaze(file));
+                        var maze = this.loader.loadMaze(file);
+                        System.out.println(maze.length);
+                        System.out.println(maze[0].length);
+                        this.solver.setMaze(maze);
+                        this.gui.displayMaze(this.solver.getMaze());
                         return null;
                     }
         ));
 
-//        this.gui.setAstarButtonListener((event) -> {
-//            this.
-//            TODO utför algoritmen på den aktuella mazen,
-//             returnera en sekvens med steg till gui.replay(), samt
-//             statistik om hur många steg som togs etc
-//
-//        });
+        this.gui.setAstarButtonListener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+        });
+        this.gui.setDjikstraButtonListener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.djikstras1(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+        });
+        this.gui.setDjikstraButton2Listener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.djikstras2(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+        });
     }
-
 }

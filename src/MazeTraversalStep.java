@@ -1,1 +1,1 @@
-public record MazeTraversalStep(int row, int col, Cell newState) {}
+public record MazeTraversalStep(Coordinate coordinate, Cell newState) {}
