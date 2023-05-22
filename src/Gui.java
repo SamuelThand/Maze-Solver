@@ -1,9 +1,12 @@
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
+import java.util.function.Function;
 
 public class Gui extends JFrame {
 
@@ -62,6 +65,9 @@ public class Gui extends JFrame {
         this.aStarButton = new JButton("A*");
         this.dijkstraButton = new JButton("Dijkstra");
         this.dijkstraButton2 = new JButton("Dijkstra");
+
+        this.setButtonStates(false);
+        this.selectButton.setEnabled(true);
     }
 
     private void build() {
@@ -119,6 +125,7 @@ public class Gui extends JFrame {
                                     this.finishButton = button;
                                     this.currentState = State.BOTH_SELECTED;
                                     this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                    this.setButtonStates(true, this.selectButton);
                                 }
                                 break;
                             case FINISH_SELECTED:
@@ -131,6 +138,7 @@ public class Gui extends JFrame {
                                     this.startButton = button;
                                     this.currentState = State.BOTH_SELECTED;
                                     this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
+                                    this.setButtonStates(true, this.selectButton);
                                 }
                                 break;
                             case BOTH_SELECTED:
@@ -139,11 +147,13 @@ public class Gui extends JFrame {
                                     this.startButton = null;
                                     this.currentState = State.FINISH_SELECTED;
                                     this.setInteractiveMazeCells(true, this.finishButton);
+                                    this.setButtonStates(false, this.selectButton);
                                 } else if (button == this.finishButton) {
                                     button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
                                     this.finishButton = null;
                                     this.currentState = State.START_SELECTED;
                                     this.setInteractiveMazeCells(true, this.startButton);
+                                    this.setButtonStates(false, this.selectButton);
                                 }
                         }
                 });
@@ -175,11 +185,20 @@ public class Gui extends JFrame {
         };
     }
 
-    private void setButtonStates(Boolean value) {
-        this.selectButton.setEnabled(value);
-        this.aStarButton.setEnabled(value);
-        this.dijkstraButton.setEnabled(value);
-        this.dijkstraButton2.setEnabled(value);
+    private void setButtonStates(Boolean value, JButton... exceptions) {
+
+        if (!containsButton(this.selectButton, exceptions))
+            this.selectButton.setEnabled(value);
+        if (!containsButton(this.aStarButton, exceptions))
+            this.aStarButton.setEnabled(value);
+        if (!containsButton(this.dijkstraButton, exceptions))
+            this.dijkstraButton.setEnabled(value);
+        if (!containsButton(this.dijkstraButton2, exceptions))
+            this.dijkstraButton2.setEnabled(value);
+
+//        this.aStarButton.setEnabled(value);
+//        this.dijkstraButton.setEnabled(value);
+//        this.dijkstraButton2.setEnabled(value);
     }
 
     private void setInteractiveMazeCells(Boolean value, JButton... exceptions) {
@@ -197,7 +216,20 @@ public class Gui extends JFrame {
         return false;
     }
 
+    public void filePicker(Function<File, Void> callback) {
+//        var path = "src/maze-image.jpg"; //TODO extract path from picker function
+        var picker = new JFileChooser();
+        picker.setCurrentDirectory(new File("resources/mazes"));
+        picker.setFileFilter(new FileNameExtensionFilter("JPG files", "jpg"));
+
+        if (picker.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+            callback.apply(new File(picker.getSelectedFile().getAbsolutePath()));
+    }
+
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
+
+        //TODO increment a counter in the gui for each executed step
+
         this.repaintMaze();
         this.setButtonStates(false);
         this.setInteractiveMazeCells(false);
