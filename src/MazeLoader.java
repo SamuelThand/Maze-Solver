@@ -46,7 +46,7 @@ public class MazeLoader {
         int height = maze.length;
         int width = maze[0].length;
         int removeSize = pathSize + 1;
-        Cell[][] reducedMaze = new Cell[(height / pathSize * 2)][];
+        Cell[][] reducedMaze = new Cell[(height / pathSize * 2) - 1][];
         int j = 0;
 
         for (int i = 0; i < height; i += removeSize) {
