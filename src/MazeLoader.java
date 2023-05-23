@@ -61,7 +61,9 @@ public class MazeLoader {
         // TODO: Include wall size in the calculation to allow maze with thicker walls
         int height = maze.length;
         int width = maze[0].length;
-        int skipSize = pathSize + 1;
+        int wallSize = getWallWidth(maze);
+//        int wallSize = 1;
+        int skipSize = pathSize + wallSize;
         int reducedHeight = (height / pathSize) * 2 + 1;
         int reducedWidth = (width / pathSize) * 2 + 1;
 
@@ -70,10 +72,10 @@ public class MazeLoader {
 
         int j = 0;
 
-        for (int i = 0; i < height; i += skipSize) {
-            tempMaze[j] = reduceCellByInterval(maze[i], skipSize, reducedWidth);
+        for (int i = wallSize - 1; i < height; i += skipSize) {
+            tempMaze[j] = reduceCellByInterval(maze[i], skipSize, wallSize, reducedWidth);
             if (i + 1 < height) {
-                tempMaze[j + 1] = reduceCellByInterval(maze[i + 1], skipSize, reducedWidth);
+                tempMaze[j + 1] = reduceCellByInterval(maze[i + 1], skipSize, wallSize, reducedWidth);
                 j++;
             }
             j++;
@@ -98,19 +100,23 @@ public class MazeLoader {
     /**
      *
      * @param row full scale representation of a row in the maze
-     * @param pathSize size of the path
+     * @param skipSize size of the path
      * @param reducedWidth width of the reduced maze, may be rounded up
      * @return compressed version of the row without null values
      */
-    private Cell[] reduceCellByInterval(Cell[] row, int pathSize, int reducedWidth) {
+    private Cell[] reduceCellByInterval(Cell[] row, int skipSize, int wallSize, int reducedWidth) {
         // TODO: Change to use a list instead of an array
         // TODO: Include wall size in the calculation to allow maze with thicker walls
         int width = row.length;
         Cell[] tempRow = new Cell[reducedWidth];
         int j = 0;
 
-        for (int i = 0; i < width; i += pathSize) {
-            tempRow[j] = row[i];
+        for (int i = wallSize - 1; i < width; i += skipSize) {
+            if (i - wallSize < 0) {
+                tempRow[j] = row[i];
+            } else {
+                tempRow[j] = row[i - wallSize] == row[i] ? row[i] : Cell.WALL;
+            }
             if (i + 1 < width) {
                 tempRow[j + 1] = row[i + 1];
                 j++;
@@ -135,6 +141,32 @@ public class MazeLoader {
     }
 
     /**
+     * Estimates the wall width by iterating from the edge of the maze and inwards.
+     * Starts at 1/7 of the height and iterates every 1/7 + 1 of the height.
+     * @param maze full scale representation of the maze
+     * @return estimated wall width
+     */
+    private int getWallWidth(Cell[][] maze) {
+        int width = maze[0].length;
+        int height = maze.length;
+        int wallWidth = 0;
+
+        for (int i = height / 7; i < height; i += height / 7 + 1) {
+            int currentWidth = 0;
+            for (int j = 0; j < width; j++) {
+                if (maze[i][j] == Cell.WALL) {
+                    currentWidth++;
+                } else {
+                    wallWidth = Math.max(wallWidth, currentWidth);
+                    currentWidth = 0;
+                }
+            }
+        }
+
+        return wallWidth;
+    }
+
+    /**
      * Iterates over the edges and finds the smallest continuous white area.
      * This is used to determine the size of the path.
      * @param image image of the maze
@@ -143,6 +175,7 @@ public class MazeLoader {
     public static int findSmallestContinuousWhite(BufferedImage image) {
         int smallestWhite = Integer.MAX_VALUE;
         int currentWhite = 0;
+        int badPixelThreshold = 2;
         int width = image.getWidth();
         int height = image.getHeight();
         boolean foundWhite = false;
@@ -153,7 +186,7 @@ public class MazeLoader {
                 currentWhite++;
                 foundWhite = true;
             } else {
-                if (foundWhite && currentWhite > 1) {
+                if (foundWhite && currentWhite > badPixelThreshold) {
                     smallestWhite = Math.min(smallestWhite, currentWhite);
                     foundWhite = false;
                 }
@@ -167,7 +200,7 @@ public class MazeLoader {
                 currentWhite++;
                 foundWhite = true;
             } else {
-                if (foundWhite && currentWhite > 1) {
+                if (foundWhite && currentWhite > badPixelThreshold) {
                     smallestWhite = Math.min(smallestWhite, currentWhite);
                     foundWhite = false;
                 }
@@ -181,7 +214,7 @@ public class MazeLoader {
                 currentWhite++;
                 foundWhite = true;
             } else {
-                if (foundWhite && currentWhite > 1) {
+                if (foundWhite && currentWhite > badPixelThreshold) {
                     smallestWhite = Math.min(smallestWhite, currentWhite);
                     foundWhite = false;
                 }
@@ -195,7 +228,7 @@ public class MazeLoader {
                 currentWhite++;
                 foundWhite = true;
             } else {
-                if (foundWhite && currentWhite > 1) {
+                if (foundWhite && currentWhite > badPixelThreshold) {
                     smallestWhite = Math.min(smallestWhite, currentWhite);
                     foundWhite = false;
                 }

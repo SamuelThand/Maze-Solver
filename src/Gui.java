@@ -232,7 +232,7 @@ public class Gui extends JFrame {
     }
 
     public void filePicker(Function<File, Void> callback) {
-//        var path = "src/maze-image.jpg"; //TODO extract path from picker function
+//        var path = "src/med7.jpg"; //TODO extract path from picker function
         var picker = new JFileChooser();
         picker.setCurrentDirectory(new File("resources/mazes"));
         picker.setFileFilter(new FileNameExtensionFilter("JPG files", "jpg"));
