@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MazeLoader {
 
@@ -22,9 +24,9 @@ public class MazeLoader {
     public Cell[][] loadMaze(File mazeImage) {
         BufferedImage bImage = this.processImage(mazeImage);
         int pathSize = findSmallestContinuousWhite(bImage);
-
         int width = bImage.getWidth();
         int height = bImage.getHeight();
+        long startTime = System.nanoTime(); // TODO: Remove when no time measurement is needed
 
         Cell[][] maze = new Cell[height][width];
 
@@ -34,8 +36,10 @@ public class MazeLoader {
                 maze[y][x] = isNotWall(bImage.getRGB(x, y)) ? Cell.TRAVERSABLE : Cell.WALL;
             }
         }
-
         maze = reduceMaze(maze, pathSize);
+        // TODO: Remove when no time measurement is needed
+        long endTime = System.nanoTime();
+        System.out.println("Time to load and reduce maze: " + (endTime - startTime) / 1000000 + " ms");
 
         // TODO: Remove when no text representation of maze is needed
         try (PrintWriter writer = new PrintWriter(new File("src/maze.txt"))) {
@@ -60,84 +64,45 @@ public class MazeLoader {
         // TODO: Change to use a list instead of an array
         // TODO: Include wall size in the calculation to allow maze with thicker walls
         int height = maze.length;
-        int width = maze[0].length;
         int wallSize = getWallWidth(maze);
-//        int wallSize = 1;
         int skipSize = pathSize + wallSize;
-        int reducedHeight = (height / pathSize) * 2 + 1;
-        int reducedWidth = (width / pathSize) * 2 + 1;
-
-
-        Cell[][] tempMaze = new Cell[reducedHeight][];
-
-        int j = 0;
+        List<Cell[]> reducedMaze = new ArrayList<>();
 
         for (int i = wallSize - 1; i < height; i += skipSize) {
-            tempMaze[j] = reduceCellByInterval(maze[i], skipSize, wallSize, reducedWidth);
+            reducedMaze.add(reduceCellByInterval(maze[i], skipSize, wallSize));
             if (i + 1 < height) {
-                tempMaze[j + 1] = reduceCellByInterval(maze[i + 1], skipSize, wallSize, reducedWidth);
-                j++;
-            }
-            j++;
-        }
-
-        // Compensation for rounding scaled height problem.
-        // If the last value is null, remove all null values from the end by
-        // creating a smaller array.
-        Cell[][] reducedMaze = new Cell[j][];
-
-        if (tempMaze[reducedHeight - 1] == null) {
-            for (int i = 0; i < reducedHeight; i++) {
-                if (tempMaze[i] != null) {
-                    reducedMaze[i] = tempMaze[i];
-                }
+                reducedMaze.add(reduceCellByInterval(maze[i + 1], skipSize, wallSize));
             }
         }
 
-        return reducedMaze;
+        return reducedMaze.toArray(new Cell[0][0]);
     }
 
     /**
      *
      * @param row full scale representation of a row in the maze
      * @param skipSize size of the path
-     * @param reducedWidth width of the reduced maze, may be rounded up
      * @return compressed version of the row without null values
      */
-    private Cell[] reduceCellByInterval(Cell[] row, int skipSize, int wallSize, int reducedWidth) {
+    private Cell[] reduceCellByInterval(Cell[] row, int skipSize, int wallSize) {
         // TODO: Change to use a list instead of an array
         // TODO: Include wall size in the calculation to allow maze with thicker walls
         int width = row.length;
-        Cell[] tempRow = new Cell[reducedWidth];
-        int j = 0;
+        List<Cell> reducedMaze = new ArrayList<>();
 
         for (int i = wallSize - 1; i < width; i += skipSize) {
             if (i - wallSize < 0) {
-                tempRow[j] = row[i];
+                reducedMaze.add(row[i]);
             } else {
-                tempRow[j] = row[i - wallSize] == row[i] ? row[i] : Cell.WALL;
+                Cell temp = row[i - wallSize] == row[i] ? row[i] : Cell.WALL;
+                reducedMaze.add(temp);
             }
             if (i + 1 < width) {
-                tempRow[j + 1] = row[i + 1];
-                j++;
-            }
-            j++;
-        }
-
-        // Compensation for rounding scaled width problem.
-        // If the last value is null, remove all null values from the end by
-        // creating a smaller array.
-        Cell[] reducedRow = new Cell[j];
-
-        if (tempRow[reducedWidth - 1] == null) {
-            for (int i = 0; i < reducedWidth; i++) {
-                if (tempRow[i] != null) {
-                    reducedRow[i] = tempRow[i];
-                }
+                reducedMaze.add(row[i + 1]);
             }
         }
 
-        return reducedRow;
+        return reducedMaze.toArray(new Cell[0]);
     }
 
     /**
@@ -236,6 +201,7 @@ public class MazeLoader {
             }
         }
 
+        // TODO: Remove sout when no longer needed
         System.out.println("Found path size of: " + smallestWhite);
         return smallestWhite;
     }
