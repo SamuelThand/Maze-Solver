@@ -53,10 +53,12 @@ public class MazeLoader {
      * Reduces the full scale maze array to a compressed version where the path and wall is only one cell wide.
      *
      * @param maze full scale representation of the maze
-     * @param pathSize
-     * @return
+     * @param pathSize size of the path
+     * @return compressed version of the maze
      */
     private Cell[][] reduceMaze(Cell[][] maze, int pathSize) {
+        // TODO: Change to use a list instead of an array
+        // TODO: Include wall size in the calculation to allow maze with thicker walls
         int height = maze.length;
         int width = maze[0].length;
         int skipSize = pathSize + 1;
@@ -93,7 +95,16 @@ public class MazeLoader {
         return reducedMaze;
     }
 
+    /**
+     *
+     * @param row full scale representation of a row in the maze
+     * @param pathSize size of the path
+     * @param reducedWidth width of the reduced maze, may be rounded up
+     * @return compressed version of the row without null values
+     */
     private Cell[] reduceCellByInterval(Cell[] row, int pathSize, int reducedWidth) {
+        // TODO: Change to use a list instead of an array
+        // TODO: Include wall size in the calculation to allow maze with thicker walls
         int width = row.length;
         Cell[] tempRow = new Cell[reducedWidth];
         int j = 0;
@@ -123,6 +134,12 @@ public class MazeLoader {
         return reducedRow;
     }
 
+    /**
+     * Iterates over the edges and finds the smallest continuous white area.
+     * This is used to determine the size of the path.
+     * @param image image of the maze
+     * @return size of the path
+     */
     public static int findSmallestContinuousWhite(BufferedImage image) {
         int smallestWhite = Integer.MAX_VALUE;
         int currentWhite = 0;
@@ -190,11 +207,22 @@ public class MazeLoader {
         return smallestWhite;
     }
 
+    /**
+     * Checks if the given color is not a wall (black).
+     * @param color color to check
+     * @return true if the color is not a wall
+     */
     private static boolean isNotWall(int color) {
         return color > WALL_COLOR;
     }
 
 
+    /**
+     * Processes the given image to remove the white borders.
+     *
+     * @param mazeImage image of the maze
+     * @return the given image with white borders removed.
+     */
     private BufferedImage processImage(File mazeImage) {
         BufferedImage image = null;
         try {
@@ -204,6 +232,7 @@ public class MazeLoader {
             // Process the image
             image = removeBorders(image);
             // Save the image, for demonstration purposes only
+            // TODO: Remove this when image representation is no longer needed
             ImageIO.write(image, "jpg", new File("src/new-maze.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
@@ -286,8 +315,6 @@ public class MazeLoader {
                 case RIGHT -> startCoords[0] += 1;
             }
         }
-        System.out.println(image.getRGB(startCoords[0], startCoords[1]));
-        System.out.println("Found wall at: " + Arrays.toString(startCoords));
         return startCoords;
     }
 
