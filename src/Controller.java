@@ -27,11 +27,11 @@ public class Controller {
         this.gui.setAstarButtonListener((event) -> {
             this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
         });
-        this.gui.setDjikstraButtonListener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.djikstras1(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+        this.gui.setDijkstraButtonListener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.dijkstra1(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
         });
-        this.gui.setDjikstraButton2Listener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.djikstras2(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+        this.gui.setDijkstraButton2Listener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.dijkstra2(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
         });
     }
 }

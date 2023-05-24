@@ -42,7 +42,7 @@ public class MazeLoader {
         System.out.println("Time to load and reduce maze: " + (endTime - startTime) / 1000000 + " ms");
 
         // TODO: Remove when no text representation of maze is needed
-        try (PrintWriter writer = new PrintWriter(new File("src/maze.txt"))) {
+        try (PrintWriter writer = new PrintWriter("src/maze.txt")) {
             for (Cell[] cells : maze) {
                 writer.println(Arrays.toString(cells));
             }
@@ -61,8 +61,6 @@ public class MazeLoader {
      * @return compressed version of the maze
      */
     private Cell[][] reduceMaze(Cell[][] maze, int pathSize) {
-        // TODO: Change to use a list instead of an array
-        // TODO: Include wall size in the calculation to allow maze with thicker walls
         int height = maze.length;
         int wallSize = getWallWidth(maze);
         int skipSize = pathSize + wallSize;
@@ -85,8 +83,6 @@ public class MazeLoader {
      * @return compressed version of the row without null values
      */
     private Cell[] reduceCellByInterval(Cell[] row, int skipSize, int wallSize) {
-        // TODO: Change to use a list instead of an array
-        // TODO: Include wall size in the calculation to allow maze with thicker walls
         int width = row.length;
         List<Cell> reducedMaze = new ArrayList<>();
 
@@ -201,7 +197,7 @@ public class MazeLoader {
             }
         }
 
-        // TODO: Remove sout when no longer needed
+        // TODO: Remove print when no longer needed
         System.out.println("Found path size of: " + smallestWhite);
         return smallestWhite;
     }

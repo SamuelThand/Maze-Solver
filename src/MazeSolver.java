@@ -20,7 +20,7 @@ public class MazeSolver {
         return Testing.generateTraversalSteps(maze.length, maze[0].length);
     }
 
-    public Queue<MazeTraversalStep> djikstras1(Coordinate start, Coordinate finish) {
+    public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
         //TODO this.maze ....
         System.out.println("start: " + start);
         System.out.println("finish: " + finish);
@@ -28,7 +28,7 @@ public class MazeSolver {
         return Testing.generateTraversalSteps(maze.length, maze[0].length);
     }
 
-    public Queue<MazeTraversalStep> djikstras2(Coordinate start, Coordinate finish) {
+    public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
         //TODO this.maze ....
         System.out.println("start: " + start);
         System.out.println("finish: " + finish);
