@@ -10,6 +10,8 @@ import java.util.function.Function;
 
 public class Gui extends JFrame {
 
+    //TODO refactor cells to have their own coordinate, then optimize
+
     private final Dimension frameSize;
     private JPanel buttonPanel;
     private JPanel stepsPanel;
@@ -25,6 +27,7 @@ public class Gui extends JFrame {
     private Cell[][] unsolvedMaze;
     private JButton[][] graphicalMaze;
     private final Map<JButton, Coordinate> buttonCoordinateMap = new HashMap<>();
+    private final List<Coordinate> changedCells;
     private JButton startButton;
     private JButton finishButton;
 
@@ -39,6 +42,7 @@ public class Gui extends JFrame {
         this.graphicalMaze = null;
         this.currentState = State.NONE_SELECTED;
         this.traversalSteps = 0;
+        this.changedCells = new ArrayList<>();
         this.initFrame();
         this.initPanels();
         this.initComponents();
@@ -129,12 +133,13 @@ public class Gui extends JFrame {
         this.finishButton = null;
         this.resetStepsCounter();
         this.setButtonStates(false, this.selectButton);
+        this.changedCells.clear();
     }
 
     public void resetMaze() {
+        this.repaintMaze();
         this.restoreState();
         this.resetStepsCounter();
-        this.repaintMaze();
     }
 
     public void displayMaze(Cell[][] maze) {
@@ -152,11 +157,14 @@ public class Gui extends JFrame {
 
                 if (maze[row][col] == Cell.WALL)
                     button.setEnabled(false);
-                else
+                else {
+                    int finalRow = row;
+                    int finalCol = col;
                     button.addActionListener(e -> {
                         switch (this.currentState) {
                             case NONE_SELECTED -> {
                                 button.setBackground(translateStateToColor(Cell.START));
+                                this.changedCells.add(new Coordinate(finalRow, finalCol));
                                 this.startButton = button;
                                 this.currentState = State.START_SELECTED;
                             }
@@ -166,6 +174,7 @@ public class Gui extends JFrame {
                                     this.startButton = null;
                                     this.currentState = State.NONE_SELECTED;
                                 } else {
+                                    this.changedCells.add(new Coordinate(finalRow, finalCol));
                                     button.setBackground(translateStateToColor(Cell.FINISH));
                                     this.finishButton = button;
                                     this.currentState = State.BOTH_SELECTED;
@@ -178,6 +187,7 @@ public class Gui extends JFrame {
                                     this.finishButton = null;
                                     this.currentState = State.NONE_SELECTED;
                                 } else {
+                                    this.changedCells.add(new Coordinate(finalRow, finalCol));
                                     button.setBackground(translateStateToColor(Cell.START));
                                     this.startButton = button;
                                     this.currentState = State.BOTH_SELECTED;
@@ -199,6 +209,7 @@ public class Gui extends JFrame {
                             }
                         }
                 });
+                }
 
                 this.graphicalMaze[row][col] = button;
                 buttonCoordinateMap.put(button, new Coordinate(row, col));
@@ -211,9 +222,9 @@ public class Gui extends JFrame {
     }
 
     private void repaintMaze() {
-        for (int row = 0; row < this.unsolvedMaze.length; row++)
-            for (int col = 0; col < this.unsolvedMaze[0].length; col++)
-                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.unsolvedMaze[row][col]));
+        for (Coordinate changedCell : this.changedCells)
+                this.graphicalMaze[changedCell.row()][changedCell.col()].setBackground(
+                        translateStateToColor(this.unsolvedMaze[changedCell.row()][changedCell.col()]));
     }
 
     private static Color translateStateToColor(Cell cell) {
@@ -274,6 +285,7 @@ public class Gui extends JFrame {
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
                     graphicalMaze[step.coordinate().row()][step.coordinate().col()].setBackground(translateStateToColor(step.newState()));
+                    changedCells.add(step.coordinate());
                     incrementStepsCounter();
                 }
             }
