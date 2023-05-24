@@ -33,5 +33,8 @@ public class Controller {
         this.gui.setDijkstraButton2Listener((event) -> {
             this.gui.replaySearchProcedure(this.solver.dijkstra2(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
         });
+        this.gui.setResetMazeButtonListener((event) -> {
+            this.gui.resetMaze();
+        });
     }
 }

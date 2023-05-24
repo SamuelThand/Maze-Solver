@@ -12,18 +12,21 @@ public class Gui extends JFrame {
 
     private final Dimension frameSize;
     private JPanel buttonPanel;
+    private JPanel stepsPanel;
     private JPanel mazePanel;
     private JButton selectButton;
     private JButton aStarButton;
     private JButton dijkstraButton;
     private JButton dijkstraButton2;
+    private JButton resetMazeButton;
+    private JLabel traversalStepsLabel;
+    private JLabel traversalStepsCounter;
+    private int traversalSteps;
     private Cell[][] unsolvedMaze;
     private JButton[][] graphicalMaze;
     private final Map<JButton, Coordinate> buttonCoordinateMap = new HashMap<>();
     private JButton startButton;
     private JButton finishButton;
-    private Coordinate startCoordinate;
-    private Coordinate finishCoordinate;
 
     private enum State {
         NONE_SELECTED, START_SELECTED, FINISH_SELECTED, BOTH_SELECTED
@@ -34,9 +37,8 @@ public class Gui extends JFrame {
     Gui(final Dimension frameSize) {
         this.frameSize = frameSize;
         this.graphicalMaze = null;
-        this.startButton = null;
-        this.finishButton = null;
         this.currentState = State.NONE_SELECTED;
+        this.traversalSteps = 0;
         this.initFrame();
         this.initPanels();
         this.initComponents();
@@ -61,13 +63,18 @@ public class Gui extends JFrame {
         };
         this.buttonPanel = new JPanel();
         this.buttonPanel.setLayout(new FlowLayout());
+        this.stepsPanel = new JPanel();
     }
 
     private void initComponents() {
         this.selectButton = new JButton("Select Maze");
         this.aStarButton = new JButton("A*");
         this.dijkstraButton = new JButton("Dijkstra");
-        this.dijkstraButton2 = new JButton("Dijkstra");
+        this.dijkstraButton2 = new JButton("Dijkstra2");
+        this.resetMazeButton = new JButton("Reset Maze");
+
+        this.traversalStepsLabel = new JLabel("Steps: ");
+        this.traversalStepsCounter = new JLabel(String.valueOf(this.traversalSteps));
 
         this.setButtonStates(false, null);
         this.selectButton.setEnabled(true);
@@ -75,11 +82,16 @@ public class Gui extends JFrame {
 
     private void build() {
         this.buttonPanel.add(this.selectButton);
+        this.buttonPanel.add(this.resetMazeButton);
         this.buttonPanel.add(this.aStarButton);
         this.buttonPanel.add(this.dijkstraButton);
         this.buttonPanel.add(this.dijkstraButton2);
 
+        this.stepsPanel.add(this.traversalStepsLabel);
+        this.stepsPanel.add(this.traversalStepsCounter);
+
         this.add(this.buttonPanel, BorderLayout.NORTH);
+        this.add(this.stepsPanel, BorderLayout.CENTER);
         this.add(this.mazePanel, BorderLayout.SOUTH);
     }
 
@@ -99,6 +111,10 @@ public class Gui extends JFrame {
         this.dijkstraButton2.addActionListener(listener);
     }
 
+    public void setResetMazeButtonListener(ActionListener listener) {
+        this.resetMazeButton.addActionListener(listener);
+    }
+
     public Coordinate getStartCoordinate() {
         return buttonCoordinateMap.get(this.startButton);
     }
@@ -107,11 +123,22 @@ public class Gui extends JFrame {
         return buttonCoordinateMap.get(this.finishButton);
     }
 
-    public void displayMaze(Cell[][] maze) {
+    private void restoreState() {
         this.currentState = State.NONE_SELECTED;
         this.startButton = null;
         this.finishButton = null;
+        this.resetStepsCounter();
         this.setButtonStates(false, this.selectButton);
+    }
+
+    public void resetMaze() {
+        this.restoreState();
+        this.resetStepsCounter();
+        this.repaintMaze();
+    }
+
+    public void displayMaze(Cell[][] maze) {
+        this.restoreState();
         this.mazePanel.removeAll();
         this.mazePanel.setLayout(new GridLayout(maze.length, maze[0].length));
         this.graphicalMaze = new JButton[maze.length][maze[0].length];
@@ -210,6 +237,8 @@ public class Gui extends JFrame {
             this.dijkstraButton.setEnabled(value);
         if (!(this.dijkstraButton2 == exception))
             this.dijkstraButton2.setEnabled(value);
+        if (!(this.resetMazeButton == exception))
+            this.resetMazeButton.setEnabled(value);
     }
 
     public void filePicker(Function<File, Void> callback) {
@@ -223,9 +252,8 @@ public class Gui extends JFrame {
 
     public void replaySearchProcedure(Queue<MazeTraversalStep> steps) {
 
-        //TODO increment a counter in the gui for each executed step
-
         this.repaintMaze();
+        this.resetStepsCounter();
         this.setButtonStates(false, null);
 
         var worker = new SwingWorker<Void, MazeTraversalStep>() {
@@ -246,6 +274,7 @@ public class Gui extends JFrame {
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
                     graphicalMaze[step.coordinate().row()][step.coordinate().col()].setBackground(translateStateToColor(step.newState()));
+                    incrementStepsCounter();
                 }
             }
 
@@ -256,5 +285,15 @@ public class Gui extends JFrame {
         };
 
         worker.execute();
+    }
+
+    private void resetStepsCounter() {
+        this.traversalSteps = 0;
+        this.traversalStepsCounter.setText(String.valueOf(this.traversalSteps));
+    }
+
+    private void incrementStepsCounter() {
+        this.traversalSteps++;
+        this.traversalStepsCounter.setText(String.valueOf(this.traversalSteps));
     }
 }
