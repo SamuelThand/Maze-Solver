@@ -17,9 +17,8 @@ public class Gui extends JFrame {
     private JButton aStarButton;
     private JButton dijkstraButton;
     private JButton dijkstraButton2;
-    private Cell[][] originalMaze; //TODO refactor to backend? Get from backend via controller instead
+    private Cell[][] unsolvedMaze;
     private JButton[][] graphicalMaze;
-    private final ArrayList<JButton> interactiveMazeCells;
     private final Map<JButton, Coordinate> buttonCoordinateMap = new HashMap<>();
     private JButton startButton;
     private JButton finishButton;
@@ -38,7 +37,6 @@ public class Gui extends JFrame {
         this.startButton = null;
         this.finishButton = null;
         this.currentState = State.NONE_SELECTED;
-        this.interactiveMazeCells = new ArrayList<>();
         this.initFrame();
         this.initPanels();
         this.initComponents();
@@ -71,7 +69,7 @@ public class Gui extends JFrame {
         this.dijkstraButton = new JButton("Dijkstra");
         this.dijkstraButton2 = new JButton("Dijkstra");
 
-        this.setButtonStates(false);
+        this.setButtonStates(false, null);
         this.selectButton.setEnabled(true);
     }
 
@@ -113,11 +111,7 @@ public class Gui extends JFrame {
         this.currentState = State.NONE_SELECTED;
         this.startButton = null;
         this.finishButton = null;
-        // TODO: Move if placed in wrong spot
-        this.aStarButton.setEnabled(false);
-        this.dijkstraButton.setEnabled(false);
-        this.dijkstraButton2.setEnabled(false);
-
+        this.setButtonStates(false, this.selectButton);
         this.mazePanel.removeAll();
         this.mazePanel.setLayout(new GridLayout(maze.length, maze[0].length));
         this.graphicalMaze = new JButton[maze.length][maze[0].length];
@@ -126,62 +120,57 @@ public class Gui extends JFrame {
             for (int col = 0; col < maze[0].length; col++) {
                 var button = new JButton();
                 button.setBackground(translateStateToColor(maze[row][col]));
-                button.setBorderPainted(false);  // Do not paint the border
-                button.setContentAreaFilled(true);  // Fill the content area with the background color
+                button.setBorderPainted(false);
+                button.setContentAreaFilled(true);
 
                 if (maze[row][col] == Cell.WALL)
                     button.setEnabled(false);
                 else
-                    this.interactiveMazeCells.add(button);
-                button.addActionListener(e -> {
-                    switch (this.currentState) {
-                        case NONE_SELECTED -> {
-                            button.setBackground(translateStateToColor(Cell.START));
-                            this.startButton = button;
-                            this.currentState = State.START_SELECTED;
-                        }
-                        case START_SELECTED -> {
-                            if (button == this.startButton) {
-                                button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
-                                this.startButton = null;
-                                this.currentState = State.NONE_SELECTED;
-                            } else {
-                                button.setBackground(translateStateToColor(Cell.FINISH));
-                                this.finishButton = button;
-                                this.currentState = State.BOTH_SELECTED;
-                                this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
-                                this.setButtonStates(true, this.selectButton);
-                            }
-                        }
-                        case FINISH_SELECTED -> {
-                            if (button == this.finishButton) {
-                                button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
-                                this.finishButton = null;
-                                this.currentState = State.NONE_SELECTED;
-                            } else {
+                    button.addActionListener(e -> {
+                        switch (this.currentState) {
+                            case NONE_SELECTED -> {
                                 button.setBackground(translateStateToColor(Cell.START));
                                 this.startButton = button;
-                                this.currentState = State.BOTH_SELECTED;
-                                this.setInteractiveMazeCells(false, this.startButton, this.finishButton);
-                                this.setButtonStates(true, this.selectButton);
-                            }
-                        }
-                        case BOTH_SELECTED -> {
-                            if (button == this.startButton) {
-                                button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
-                                this.startButton = null;
-                                this.currentState = State.FINISH_SELECTED;
-                                this.setInteractiveMazeCells(true, this.finishButton);
-                                this.setButtonStates(false, this.selectButton);
-                            } else if (button == this.finishButton) {
-                                button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
-                                this.finishButton = null;
                                 this.currentState = State.START_SELECTED;
-                                this.setInteractiveMazeCells(true, this.startButton);
-                                this.setButtonStates(false, this.selectButton);
+                            }
+                            case START_SELECTED -> {
+                                if (button == this.startButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.startButton = null;
+                                    this.currentState = State.NONE_SELECTED;
+                                } else {
+                                    button.setBackground(translateStateToColor(Cell.FINISH));
+                                    this.finishButton = button;
+                                    this.currentState = State.BOTH_SELECTED;
+                                    this.setButtonStates(true, this.selectButton);
+                                }
+                            }
+                            case FINISH_SELECTED -> {
+                                if (button == this.finishButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.finishButton = null;
+                                    this.currentState = State.NONE_SELECTED;
+                                } else {
+                                    button.setBackground(translateStateToColor(Cell.START));
+                                    this.startButton = button;
+                                    this.currentState = State.BOTH_SELECTED;
+                                    this.setButtonStates(true, this.selectButton);
+                                }
+                            }
+                            case BOTH_SELECTED -> {
+                                if (button == this.startButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.startButton = null;
+                                    this.currentState = State.FINISH_SELECTED;
+                                    this.setButtonStates(false, this.selectButton);
+                                } else if (button == this.finishButton) {
+                                    button.setBackground(translateStateToColor(Cell.TRAVERSABLE));
+                                    this.finishButton = null;
+                                    this.currentState = State.START_SELECTED;
+                                    this.setButtonStates(false, this.selectButton);
+                                }
                             }
                         }
-                    }
                 });
 
                 this.graphicalMaze[row][col] = button;
@@ -189,15 +178,15 @@ public class Gui extends JFrame {
                 this.mazePanel.add(button);
             }
 
-        this.originalMaze = maze;
+        this.unsolvedMaze = maze;
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
 
     private void repaintMaze() {
-        for (int row = 0; row < this.originalMaze.length; row++)
-            for (int col = 0; col < this.originalMaze[0].length; col++)
-                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.originalMaze[row][col]));
+        for (int row = 0; row < this.unsolvedMaze.length; row++)
+            for (int col = 0; col < this.unsolvedMaze[0].length; col++)
+                this.graphicalMaze[row][col].setBackground(translateStateToColor(this.unsolvedMaze[row][col]));
     }
 
     private static Color translateStateToColor(Cell cell) {
@@ -212,34 +201,18 @@ public class Gui extends JFrame {
         };
     }
 
-    private void setButtonStates(Boolean value, JButton... exceptions) {
-        if (containsNoButton(this.selectButton, exceptions))
+    private void setButtonStates(Boolean value, JButton exception) {
+        if (!(this.selectButton == exception))
             this.selectButton.setEnabled(value);
-        if (containsNoButton(this.aStarButton, exceptions))
+        if (!(this.aStarButton == exception))
             this.aStarButton.setEnabled(value);
-        if (containsNoButton(this.dijkstraButton, exceptions))
+        if (!(this.dijkstraButton == exception))
             this.dijkstraButton.setEnabled(value);
-        if (containsNoButton(this.dijkstraButton2, exceptions))
+        if (!(this.dijkstraButton2 == exception))
             this.dijkstraButton2.setEnabled(value);
     }
 
-    private void setInteractiveMazeCells(Boolean value, JButton... exceptions) {
-        for (JButton button : this.interactiveMazeCells)
-            if (containsNoButton(button, exceptions))
-                button.setEnabled(value);
-    }
-
-    private static boolean containsNoButton(JButton button, JButton... exceptions) {
-        for (JButton exception : exceptions) {
-            if (button == exception) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public void filePicker(Function<File, Void> callback) {
-//        var path = "src/med7.jpg"; //TODO extract path from picker function
         var picker = new JFileChooser();
         picker.setCurrentDirectory(new File("resources/mazes"));
         picker.setFileFilter(new FileNameExtensionFilter("JPG files", "jpg"));
@@ -253,15 +226,15 @@ public class Gui extends JFrame {
         //TODO increment a counter in the gui for each executed step
 
         this.repaintMaze();
-        this.setButtonStates(false);
-        this.setInteractiveMazeCells(false);
+        this.setButtonStates(false, null);
+
         var worker = new SwingWorker<Void, MazeTraversalStep>() {
             @Override
             protected Void doInBackground() {
                 for (MazeTraversalStep step : steps) {
-                    try {
-                        Thread.sleep(5); // Sleep for 100 milliseconds
                         publish(step);     // Send the step to the process method
+                    try {
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt(); // Restore the interrupted status
                     }
@@ -278,7 +251,7 @@ public class Gui extends JFrame {
 
             @Override
             protected void done() {
-                setButtonStates(true);
+                setButtonStates(true, null);
             }
         };
 
