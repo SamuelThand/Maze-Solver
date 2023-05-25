@@ -216,7 +216,7 @@ public class Gui extends JFrame {
                 this.mazePanel.add(button);
             }
 
-        this.unsolvedMaze = maze;
+        this.unsolvedMaze = maze.clone(); // TODO problem med att samma maze delas av front och backend
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
@@ -224,7 +224,7 @@ public class Gui extends JFrame {
     private void repaintMaze() {
         for (Coordinate changedCell : this.changedCells)
                 this.graphicalMaze[changedCell.row()][changedCell.col()].setBackground(
-                        translateStateToColor(this.unsolvedMaze[changedCell.row()][changedCell.col()]));
+                        translateStateToColor(this.unsolvedMaze[changedCell.row()][changedCell.col()])); //TODO problemet är att unsolvedmaze ändras av algoritmen
     }
 
     private static Color translateStateToColor(Cell cell) {

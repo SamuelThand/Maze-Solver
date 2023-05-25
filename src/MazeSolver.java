@@ -13,10 +13,11 @@ public class MazeSolver {
     }
 
     public Queue<MazeTraversalStep> aStar(Coordinate startCoordinate, Coordinate finishCoordinate) {
-        System.out.println("start: " + startCoordinate);
-        System.out.println("finish: " + finishCoordinate);
+
+        var maze = this.copyMaze();
 
         Map<Coordinate, MazeTraversalStep> mazeTraversalMap = new HashMap<>();
+        Map<Coordinate, Boolean> pathMap = new HashMap<>();
         var openSet = new PriorityQueue<>(Comparator.comparingInt(MazeTraversalStep::totalCost));
         var startCell = new MazeTraversalStep(startCoordinate, null, 0, calculateHeuristicsCost(startCoordinate, finishCoordinate), Cell.START);
 
@@ -26,14 +27,46 @@ public class MazeSolver {
             var currentStep = openSet.poll();
             maze[currentStep.coordinate().row()][currentStep.coordinate().col()] = Cell.VISITED;
 
-            if (currentStep.coordinate().equals(finishCoordinate))
+
+            //TODO work with this backtracking
+            if (currentStep.coordinate().equals(finishCoordinate)) {
+//                // Build path and update pathMap
+//                Queue<MazeTraversalStep> path = buildPath(currentStep, mazeTraversalMap);
+//                for (MazeTraversalStep step : path) {
+//                    pathMap.put(step.coordinate(), true);
+//                }
+//                // Traverse the maze and mark dead ends
+//                for (Coordinate coord : mazeTraversalMap.keySet()) {
+//                    if (maze[coord.row()][coord.col()] == Cell.VISITED && !pathMap.getOrDefault(coord, false)) {
+//                        maze[coord.row()][coord.col()] = Cell.DEAD_END;
+//
+//                        //TODO added in wrong order, not in chronological order.
+//                        MazeTraversalStep step = mazeTraversalMap.get(coord);
+//                        // Create a new MazeTraversalStep with the same details, but new state.
+//                        MazeTraversalStep newStep = new MazeTraversalStep(coord, step.parent(), step.initialCost(), step.heuristicsCost(), Cell.DEAD_END);
+//                        mazeTraversalMap.put(coord, newStep);
+//                    }
+//                }
+//                // Build the final queue of steps, including DEAD_END steps.
+//                Queue<MazeTraversalStep> finalSteps = new LinkedList<>();
+//                for (MazeTraversalStep step : mazeTraversalMap.values()) {
+//                    finalSteps.add(step);
+//                }
+//                return finalSteps;
+
+
+
                 return buildPath(currentStep, mazeTraversalMap);
+            }
+
+
+
 
             for (Coordinate neighbour : getNeighbours(currentStep.coordinate())) {
                 var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
                 var neighbourIsVisited =  maze[neighbour.row()][neighbour.col()] == Cell.VISITED;
 
-                if (neighbourIsWall || neighbourIsVisited)
+                if (neighbourIsWall || neighbourIsVisited) //TODO vad innebär det för backtracking att den aldrig återbesöker visited?
                     continue;
 
                 int preliminaryInitialCostToNeighbourCell = currentStep.initialCost() + 1;
@@ -50,7 +83,7 @@ public class MazeSolver {
                             currentStep.coordinate(),
                             preliminaryInitialCostToNeighbourCell,
                             neighbourCell.heuristicsCost(),
-                            Cell.TRAVERSABLE);
+                            Cell.VISITED);
 
                     mazeTraversalMap.put(neighbour, neighbourCell);
                     if (!openSet.contains(neighbourCell))
@@ -61,8 +94,16 @@ public class MazeSolver {
         }
 
         return new LinkedList<>(); // No valid path found
-//        return Testing.generateTraversalSteps(maze.length, maze[0].length);
     }
+
+    public Cell[][] copyMaze() {
+        Cell[][] copiedMaze = new Cell[this.maze.length][this.maze[0].length];
+        for (int i = 0; i < this.maze.length; i++)
+            System.arraycopy(this.maze[i], 0, copiedMaze[i], 0, this.maze[0].length);
+
+        return copiedMaze;
+    }
+
 
     /**
      * Calculate the blablabla using manhattan distance
