@@ -50,6 +50,7 @@ public class MazeSolver {
                 if (newDist < distance.get(neighbor)) {
                     distance.put(neighbor, newDist);
                     previous.put(neighbor, current);
+                    // Distance is changed, update position in queue
                     priorityQueue.remove(neighbor);
                     priorityQueue.offer(neighbor);
                 }
