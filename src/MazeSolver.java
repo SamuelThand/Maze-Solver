@@ -21,7 +21,6 @@ public class MazeSolver {
     }
 
     public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
-        //TODO this.maze ....
         System.out.println("start: " + start);
         System.out.println("finish: " + finish);
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
@@ -41,6 +40,7 @@ public class MazeSolver {
             allSteps.add(new MazeTraversalStep(current, Cell.VISITED));
 
             if (current.equals(finish)) {
+                System.out.println(distance.get(current)); // TODO: Remove
                 break;
             }
 
@@ -68,17 +68,6 @@ public class MazeSolver {
         allSteps.addAll(finalPath);
 
         return allSteps;
-
-
-//        // DEMO of graph
-//        for (Coordinate pos : graph.keySet()) {
-//            allSteps.add(new MazeTraversalStep(pos, Cell.VISITED));
-//            Map<Coordinate, Integer> n = graph.get(pos).neighbor();
-//            for (Coordinate c: n.keySet()) {
-//                allSteps.add(new MazeTraversalStep(c, Cell.DEAD_END));
-//            }
-//        }
-//        return allSteps;
     }
 
     public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
