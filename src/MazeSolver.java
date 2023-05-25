@@ -54,14 +54,19 @@ public class MazeSolver {
                     priorityQueue.offer(neighbor);
                 }
             }
-            for (Coordinate pos = finish; pos != null; pos = previous.get(pos)) {
-                System.out.println(pos);
-                finalPath.add(new MazeTraversalStep(pos, Cell.PATH));
-            }
-
         }
 
-        return finalPath;
+        if (previous.containsKey(finish)) {
+            Coordinate pos = finish;
+            while (pos != null) {
+                finalPath.add(new MazeTraversalStep(pos, Cell.PATH));
+                pos = previous.get(pos);
+            }
+        }
+
+        allSteps.addAll(finalPath);
+
+        return allSteps;
 
 
 //        // DEMO of graph
