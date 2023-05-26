@@ -20,14 +20,25 @@ public class MazeSolver {
         return Testing.generateTraversalSteps(maze.length, maze[0].length);
     }
 
+    /**
+     * Dijkstra's algorithm using a priority queue and graph.
+     * @param start Coordinate to start at
+     * @param finish Coordinate to finish at
+     * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
+     */
     public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
-//        Set<Coordinate> finalPath = new HashSet<>();
+        // Map to store total cost/weight/distance of all searched nodes.
+        // The Coordinate is one of the nodes and the integer is the distance traveled from start to that node in a
+        // straight path.
         Map<Coordinate, Integer> distance = new HashMap<>();
-        Map<Coordinate, Coordinate> previous = new HashMap<>();
+        Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
+        // PriorityQueue used to keep track of next least expensive path to take.
         Queue<Coordinate> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(a -> distance.getOrDefault(a, Integer.MAX_VALUE)));
-        HashMap<Coordinate, Node> graph = generateGraph(start, finish);
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze
 
+        // Initialize distance to all nodes to infinity, except for start node which is 0
+        // Also add all nodes to the priority queue
         for (Coordinate coordinate : graph.keySet()) {
             distance.put(coordinate, coordinate.equals(start) ? 0 : Integer.MAX_VALUE);
             priorityQueue.offer(coordinate);
@@ -41,12 +52,13 @@ public class MazeSolver {
                 break;
             }
 
+            // Loop through all neighbors of current node
             for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
                 Coordinate neighbor = entry.getKey();
                 int currentDistance = distance.get(current);
                 int neighborDistance = distance.get(neighbor);
                 int newDistance = currentDistance + entry.getValue();
-
+                // If new distance is less than the current distance, update the distance and previous node
                 if (newDistance < neighborDistance) {
                     distance.put(neighbor, newDistance);
                     previous.put(neighbor, current);
@@ -57,24 +69,19 @@ public class MazeSolver {
             }
         }
 
-//        // Generate final path by backtracking from finish to start
-//        if (previous.containsKey(finish)) {
-//            Coordinate pos = finish;
-//            while (pos != null) {
-//                allSteps.add(new MazeTraversalStep(pos, Cell.PATH));
-//                pos = previous.get(pos);
-//            }
-//        }
-
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
             connectFinishingPath(finish, allSteps, previous);
         }
-
-
         return allSteps;
     }
 
+    /**
+     * Add all steps traveled from finish to start to the allSteps queue.
+     * @param finish finish coordinate
+     * @param allSteps queue to add the steps to
+     * @param previous map containing the path taken between nodes (in order to backtrack from finish to start)
+     */
     private static void connectFinishingPath(Coordinate finish, Queue<MazeTraversalStep> allSteps, Map<Coordinate, Coordinate> previous) {
         Coordinate pos = finish;
         while (pos != null) {
@@ -116,42 +123,6 @@ public class MazeSolver {
         }
     }
 
-    private Queue<MazeTraversalStep> genereateAllCellSteps(Queue<MazeTraversalStep> allSteps, Set<Coordinate> finalPath) {
-        // TODO: The steps are not in order, they are added in the order they are generated
-        Queue<MazeTraversalStep> mergedSteps = new ArrayDeque<>();
-        Coordinate prev = allSteps.poll().coordinate();
-        MazeTraversalStep step = allSteps.poll();
-        while (!allSteps.isEmpty()) {
-            Cell type = finalPath.contains(step.coordinate()) ? Cell.PATH : Cell.VISITED;
-            // Generate MazeTraversalStep for each cell between prev and step.coordinate()
-            if (step.coordinate().row() == prev.row()) {
-                if (step.coordinate().col() < prev.col()) {
-                    for (int i = step.coordinate().col(); i < prev.col(); i++) {
-                        mergedSteps.add(new MazeTraversalStep(new Coordinate(step.coordinate().row(), i), type));
-                    }
-                } else {
-                    for (int i = prev.col(); i < step.coordinate().col(); i++) {
-                        mergedSteps.add(new MazeTraversalStep(new Coordinate(step.coordinate().row(), i), type));
-                    }
-                }
-            } else {
-                if (step.coordinate().row() < prev.row()) {
-                    for (int i = step.coordinate().row(); i < prev.row(); i++) {
-                        mergedSteps.add(new MazeTraversalStep(new Coordinate(i, step.coordinate().col()), type));
-                    }
-                } else {
-                    for (int i = prev.row(); i < step.coordinate().row(); i++) {
-                        mergedSteps.add(new MazeTraversalStep(new Coordinate(i, step.coordinate().col()), type));
-                    }
-                }
-            }
-            mergedSteps.add(step);
-            prev = step.coordinate();
-            step = allSteps.poll();
-        }
-        return mergedSteps;
-    }
-
     public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
         //TODO this.maze ....
         System.out.println("start: " + start);
@@ -168,15 +139,16 @@ public class MazeSolver {
      * @return graph representation of the maze
      */
     private HashMap<Coordinate, Node> generateGraph(Coordinate start, Coordinate finish) {
+        Coordinate current;
         HashMap<Coordinate, Node> graph = new HashMap<>();
         int rows = this.maze.length;
         int cols = this.maze[0].length;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                Coordinate current = new Coordinate(i, j);
                 if (maze[i][j] == Cell.WALL) {
                     continue;
                 }
+                current = new Coordinate(i, j);
                 if (shouldStoreNode(current, start, finish)) {
                     Map<Coordinate, Integer> neighbors = new HashMap<>();
                     Node node = new Node(neighbors, current);
@@ -192,8 +164,7 @@ public class MazeSolver {
                             }
                             offset++;
                         }
-                    }
-                    ;
+                    };
                     if (j - 1 >= 0 && maze[i][j - 1] != Cell.WALL) { // Search left
                         int offset = 1;
                         while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) {
@@ -205,8 +176,7 @@ public class MazeSolver {
                             }
                             offset++;
                         }
-                    }
-                    ;
+                    };
                 }
             }
         }
@@ -242,8 +212,5 @@ public class MazeSolver {
         return !horizontalPath && !verticalPath;
     }
 
-    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {
-    }
-
-    ;
+    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {};
 }
