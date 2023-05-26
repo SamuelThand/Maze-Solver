@@ -1,4 +1,3 @@
-import java.awt.*;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -35,7 +34,7 @@ public class Testing {
             Cell[] cellValues = Cell.values();
             Cell newState = cellValues[random.nextInt(cellValues.length)];
 
-            steps.add(new MazeTraversalStep(new Coordinate(row, col), newState));
+            steps.add(new MazeTraversalStep(0, new Coordinate(row, col), null, 0, 0, newState));
         }
 
         return steps;
