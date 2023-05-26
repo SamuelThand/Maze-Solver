@@ -15,67 +15,48 @@ public class MazeSolver {
     /**
      * Solve the maze using a greedy/normal version of the A* algorithm.
      *
-     * @param startCoordinate Where to start in the maze
-     * @param finishCoordinate Where the goal is in the maze
+     * @param start Where to start in the maze
+     * @param goal Where the goal is in the maze
      * @param greedy Run the algorithm with the priority queue sorted only based on heuristics
-     * @return
+     * @return The results of the search
      */
-    public Queue<MazeTraversalStep> aStar(Coordinate startCoordinate, Coordinate finishCoordinate, boolean greedy) {
+    public Queue<MazeTraversalStep> aStar(Coordinate start, Coordinate goal, boolean greedy) {
 
-        //Tracks the search procedure, a cell location and the step of that cell location
-        var mazeTraversalMap = new HashMap<Coordinate, MazeTraversalStep>();
-        //The order to visit the cells
-
-        var cellPriorityQueue = new PriorityQueue<>(
-                Comparator.comparingInt(
-                        greedy ? MazeTraversalStep::getHeuristicsCost : MazeTraversalStep::totalCost));
-
+        var procedure = new HashMap<Coordinate, MazeTraversalStep>();
+        var cellPriorityQueue = new PriorityQueue<>( //The order to visit the cells
+                Comparator.comparingInt(greedy ? MazeTraversalStep::getHeuristicsCost : MazeTraversalStep::totalCost));
         int currentStepNumber = 0;
-        var startCell = new MazeTraversalStep(currentStepNumber,
-                startCoordinate,
+        var startCell = new MazeTraversalStep(
+                currentStepNumber,
+                start,
                 null,
                 0,
-                calculateHeuristicsCost(startCoordinate, finishCoordinate),
+                calculateHeuristicsCost(start, goal),
                 Cell.START);
 
-        mazeTraversalMap.put(startCoordinate, startCell);
+        procedure.put(start, startCell);
         cellPriorityQueue.add(startCell);
         while (!cellPriorityQueue.isEmpty()) {
             var currentStep = cellPriorityQueue.poll();
             currentStep.setState(Cell.VISITED);
             currentStepNumber++;
 
-            // We found the finish coordinate, build the final queue of steps, including DEAD_END steps.
-            if (currentStep.getLocation().equals(finishCoordinate)) {
-                var steps = new LinkedList<>(mazeTraversalMap.values());
-                steps.sort(Comparator.comparingInt(MazeTraversalStep::getStepNumber));
+            if (currentStep.getLocation().equals(goal)) // We found the goal coordinate
+                return parseResult(procedure);
 
-                //Mark the steps contributing to the path with the correct state
-                markPath(steps, mazeTraversalMap);
-
-                // Traverse the visited steps in order and mark dead ends
-                for (MazeTraversalStep step : steps)
-                    if (step.getState() == Cell.VISITED)
-                        step.setState(Cell.DEAD_END);
-
-                return steps;
-            }
-
-            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) {
+            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Parse all neighbours
                 var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
                 var neighbourIsVisited = maze[neighbour.row()][neighbour.col()] == Cell.VISITED;
-
                 if (neighbourIsWall || neighbourIsVisited)
                     continue;
 
                 int estimatedCostToNeighbour = currentStep.getInitialCost() + 1;
-
                 // Get the neighbour cell step or create a new traversable step if it's not mapped yet
-                var neighbourCell = mazeTraversalMap.getOrDefault(neighbour, new MazeTraversalStep(
+                var neighbourCell = procedure.getOrDefault(neighbour, new MazeTraversalStep(
                                 currentStepNumber,
                                 neighbour, currentStep.getLocation(),
                                 Integer.MAX_VALUE,
-                                calculateHeuristicsCost(neighbour, finishCoordinate),
+                                calculateHeuristicsCost(neighbour, goal),
                                 Cell.TRAVERSABLE));
 
                 // A shorter path to the neighbour has been found
@@ -87,7 +68,7 @@ public class MazeSolver {
                             estimatedCostToNeighbour,
                             neighbourCell.getHeuristicsCost(),
                             Cell.TRAVERSABLE);
-                    mazeTraversalMap.put(neighbour, neighbourCell);
+                    procedure.put(neighbour, neighbourCell);
 
                     // The neighbour has not been visited
                     if (!cellPriorityQueue.contains(neighbourCell))
@@ -110,47 +91,55 @@ public class MazeSolver {
         return Math.abs(start.row() - goal.row()) + Math.abs(start.col() - goal.col());
     }
 
+
     /**
-     * Mark the cells contributing to the path as Cell.PATH
+     * Parse the results of the algorithm
      *
-     * @param steps
-     * @param mazeTraversalMap
+     * @param procedure The search procedure
+     * @return Parsed steps of the algorithm
      */
-    private void markPath(LinkedList<MazeTraversalStep> steps, Map<Coordinate, MazeTraversalStep> mazeTraversalMap) {
-        var step = steps.getLast();
-        while (step != null) {
-            step.setState(Cell.PATH);
-            step = mazeTraversalMap.get(step.getParentLocation());
+    private LinkedList<MazeTraversalStep> parseResult(Map<Coordinate, MazeTraversalStep> procedure) {
+        var steps = new LinkedList<>(procedure.values());
+        steps.sort(Comparator.comparingInt(MazeTraversalStep::getStepNumber));
+        markCells(steps, procedure);
+
+        return steps;
+    }
+
+    /**
+     * Mark the visited cells contributing to the path as Cell.PATH, and all others as Cell.DEAD_END
+     *
+     * @param steps The steps of the algorithm
+     * @param procedure The search procedure
+     */
+    private void markCells(LinkedList<MazeTraversalStep> steps, Map<Coordinate, MazeTraversalStep> procedure) {
+        var pathStep = steps.getLast();
+        while (pathStep != null) {
+            pathStep.setState(Cell.PATH);
+            pathStep = procedure.get(pathStep.getParentLocation());
         }
+        for (MazeTraversalStep step : steps)
+            if (step.getState() == Cell.VISITED)
+                step.setState(Cell.DEAD_END);
     }
 
-    private List<Coordinate> getNeighbours(Coordinate coordinate) {
+    /**
+     * Extract the location of all neighbours
+     *
+     * @param location Coordinate to find neighbours for
+     * @return List of all neighbours
+     */
+    private List<Coordinate> getNeighbours(Coordinate location) {
         List<Coordinate> neighbours = new ArrayList<>();
-        if (coordinate.row() > 0)
-            neighbours.add(new Coordinate(coordinate.row() - 1, coordinate.col()));
-        if (coordinate.row() < maze.length - 1)
-            neighbours.add(new Coordinate(coordinate.row() + 1, coordinate.col()));
-        if (coordinate.col() > 0)
-            neighbours.add(new Coordinate(coordinate.row(), coordinate.col() - 1));
-        if (coordinate.col() < maze[0].length - 1)
-            neighbours.add(new Coordinate(coordinate.row(), coordinate.col() + 1));
+        if (location.row() > 0)
+            neighbours.add(new Coordinate(location.row() - 1, location.col()));
+        if (location.row() < maze.length - 1)
+            neighbours.add(new Coordinate(location.row() + 1, location.col()));
+        if (location.col() > 0)
+            neighbours.add(new Coordinate(location.row(), location.col() - 1));
+        if (location.col() < maze[0].length - 1)
+            neighbours.add(new Coordinate(location.row(), location.col() + 1));
         return neighbours;
-    }
-
-    public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
-        //TODO this.maze ....
-        System.out.println("start: " + start);
-        System.out.println("finish: " + finish);
-
-        return Testing.generateTraversalSteps(maze.length, maze[0].length);
-    }
-
-    public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
-        //TODO this.maze ....
-        System.out.println("start: " + start);
-        System.out.println("finish: " + finish);
-
-        return Testing.generateTraversalSteps(maze.length, maze[0].length);
     }
 
 }
