@@ -284,8 +284,8 @@ public class Gui extends JFrame {
             @Override
             protected void process(List<MazeTraversalStep> chunks) {
                 for (MazeTraversalStep step : chunks) {
-                    graphicalMaze[step.coordinate().row()][step.coordinate().col()].setBackground(translateStateToColor(step.newState()));
-                    changedCells.add(step.coordinate());
+                    graphicalMaze[step.getLocation().row()][step.getLocation().col()].setBackground(translateStateToColor(step.getState()));
+                    changedCells.add(step.getLocation());
                     incrementStepsCounter();
                 }
             }
