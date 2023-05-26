@@ -18,25 +18,25 @@ public class MazeSolver {
         var mazeTraversalMap = new HashMap<Coordinate, MazeTraversalStep>();
         var visitedStepsOrder = new LinkedList<MazeTraversalStep>();
         var pathSet = new HashSet<Coordinate>();
-        var cellsOrderedByTotalCost = new PriorityQueue<>(Comparator.comparingInt(MazeTraversalStep::totalCost));
+        var cellPriorityQueue = new PriorityQueue<>(Comparator.comparingInt(MazeTraversalStep::totalCost));
         var startCell = new MazeTraversalStep(startCoordinate, null, 0, calculateHeuristicsCost(startCoordinate, finishCoordinate), Cell.START);
 
         mazeTraversalMap.put(startCoordinate, startCell);
-        cellsOrderedByTotalCost.add(startCell);
-        while (!cellsOrderedByTotalCost.isEmpty()) {
-            var currentStep = cellsOrderedByTotalCost.poll();
+        cellPriorityQueue.add(startCell);
+        maze[startCoordinate.row()][startCoordinate.col()] = Cell.START;
+        pathSet.add(startCoordinate);
+        visitedStepsOrder.add(startCell);
+
+        while (!cellPriorityQueue.isEmpty()) {
+            var currentStep = cellPriorityQueue.poll();
+
             maze[currentStep.coordinate().row()][currentStep.coordinate().col()] = Cell.VISITED;
 
-            //TODO work with this backtracking
             if (currentStep.coordinate().equals(finishCoordinate)) {
-
                 for (MazeTraversalStep step : buildPath(currentStep, mazeTraversalMap))
                     pathSet.add(step.coordinate()); //Fill the path set with the coordinates contributing to the final path
-
-                // Traverse the visited steps in order and mark dead ends
-                for (MazeTraversalStep step : visitedStepsOrder) {
+                for (MazeTraversalStep step : visitedStepsOrder) { // Traverse the visited steps in order and mark dead ends
                     Coordinate coord = step.coordinate();
-
                     // Mark the cell of the step as dead end if it has been visited and is not contributing to the final path
                     if (maze[coord.row()][coord.col()] == Cell.VISITED && !pathSet.contains(coord)) {
                         maze[coord.row()][coord.col()] = Cell.DEAD_END;
@@ -47,19 +47,17 @@ public class MazeSolver {
 
                 // Build the final queue of steps, including DEAD_END steps.
                 Queue<MazeTraversalStep> finalSteps = new LinkedList<>();
-                for (MazeTraversalStep step : visitedStepsOrder) {
+                for (MazeTraversalStep step : visitedStepsOrder)
                     finalSteps.add(mazeTraversalMap.get(step.coordinate())); // Get the latest version of the step from the map.
-                }
 
                 return finalSteps;
-//                return buildPath(currentStep, mazeTraversalMap);
             }
 
             for (Coordinate neighbour : getNeighbours(currentStep.coordinate())) {
                 var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
                 var neighbourIsVisited =  maze[neighbour.row()][neighbour.col()] == Cell.VISITED;
 
-                if (neighbourIsWall || neighbourIsVisited) //TODO vad innebär det för backtracking att den aldrig återbesöker visited?
+                if (neighbourIsWall || neighbourIsVisited)
                     continue;
 
                 int preliminaryInitialCostToNeighbourCell = currentStep.initialCost() + 1;
@@ -78,8 +76,9 @@ public class MazeSolver {
                             neighbourCell.heuristicsCost(),
                             Cell.VISITED);
                     mazeTraversalMap.put(neighbour, neighbourCell);
-                    if (!cellsOrderedByTotalCost.contains(neighbourCell))
-                        cellsOrderedByTotalCost.add(neighbourCell);
+
+                    if (!cellPriorityQueue.contains(neighbourCell))
+                        cellPriorityQueue.add(neighbourCell);
                         mazeTraversalMap.put(neighbour, neighbourCell);
                         visitedStepsOrder.add(neighbourCell);
                 }
@@ -117,16 +116,6 @@ public class MazeSolver {
         }
         return path;
     }
-
-//    private Queue<MazeTraversalStep> buildPath(MazeTraversalStep finishNode, Map<Coordinate, MazeTraversalStep> mazeTraversalMap) {
-//        Deque<MazeTraversalStep> path = new ArrayDeque<>();
-//        MazeTraversalStep current = finishNode;
-//        while (current != null) {
-//            path.addFirst(current);
-//            current = mazeTraversalMap.get(current.parent());
-//        }
-//        return new LinkedList<>(path);
-//    }
 
     private List<Coordinate> getNeighbours(Coordinate coordinate) {
         List<Coordinate> neighbours = new ArrayList<>();
