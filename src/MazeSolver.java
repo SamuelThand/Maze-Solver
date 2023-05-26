@@ -15,8 +15,8 @@ public class MazeSolver {
     /**
      * Solve the maze using a greedy/normal version of the A* algorithm.
      *
-     * @param start Where to start in the maze
-     * @param goal Where the goal is in the maze
+     * @param start  Where to start in the maze
+     * @param goal   Where the goal is in the maze
      * @param greedy Run the algorithm with the priority queue sorted only based on heuristics
      * @return The results of the search
      */
@@ -53,11 +53,11 @@ public class MazeSolver {
                 int estimatedCostToNeighbour = currentStep.getInitialCost() + 1;
                 // Get the neighbour cell step or create a new traversable step if it's not mapped yet
                 var neighbourCell = procedure.getOrDefault(neighbour, new MazeTraversalStep(
-                                currentStepNumber,
-                                neighbour, currentStep.getLocation(),
-                                Integer.MAX_VALUE,
-                                calculateHeuristicsCost(neighbour, goal),
-                                Cell.TRAVERSABLE));
+                        currentStepNumber,
+                        neighbour, currentStep.getLocation(),
+                        Integer.MAX_VALUE,
+                        calculateHeuristicsCost(neighbour, goal),
+                        Cell.TRAVERSABLE));
 
                 // A shorter path to the neighbour has been found
                 if (estimatedCostToNeighbour < neighbourCell.getInitialCost()) {
@@ -82,9 +82,9 @@ public class MazeSolver {
 
     /**
      * Calculate the manhattan distance from the start coordinate to the goal coordinate
-     * @param start The starting coordinate
-     * @param goal The goal coordinate
      *
+     * @param start The starting coordinate
+     * @param goal  The goal coordinate
      * @return The manhattan distance between two coordinates
      */
     private int calculateHeuristicsCost(Coordinate start, Coordinate goal) {
@@ -109,7 +109,7 @@ public class MazeSolver {
     /**
      * Mark the visited cells contributing to the path as Cell.PATH, and all others as Cell.DEAD_END
      *
-     * @param steps The steps of the algorithm
+     * @param steps     The steps of the algorithm
      * @param procedure The search procedure
      */
     private void markCells(LinkedList<MazeTraversalStep> steps, Map<Coordinate, MazeTraversalStep> procedure) {
@@ -144,7 +144,8 @@ public class MazeSolver {
 
     /**
      * Dijkstra's algorithm using a priority queue and graph.
-     * @param start Coordinate to start at
+     *
+     * @param start  Coordinate to start at
      * @param finish Coordinate to finish at
      * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
      */
@@ -169,18 +170,9 @@ public class MazeSolver {
 
         while (!priorityQueue.isEmpty()) {
             Coordinate current = priorityQueue.poll();
-            MazeTraversalStep step;
-
-            if (current.equals(finish)) {
-                step = new MazeTraversalStep(current, Cell.FINISH);
-                allSteps.add(step);
+            if (markAndStoreStep(start, finish, allSteps, current)) {
                 break;
-            } else if (current.equals(start)) {
-                step = new MazeTraversalStep(current, Cell.START);
-            } else {
-                step = new MazeTraversalStep(current, Cell.VISITED);
             }
-            allSteps.add(step);
 
             // Loop through all neighbors of current node
             for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
@@ -208,9 +200,94 @@ public class MazeSolver {
         return allSteps;
     }
 
+    public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
+        long startTime = System.nanoTime();
+        Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
+        // Map to store total cost/weight/distance of all searched nodes.
+        // The Coordinate is one of the nodes and the integer is the distance traveled from start to that node in a
+        // straight path.
+        Map<Coordinate, Integer> distance = new HashMap<>();
+        Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
+        List<Coordinate> nodeList = new ArrayList<>(); // List containing nodes
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze
+
+        // Initialize distance to all nodes to infinity, except for start node which is 0
+        // Also add all nodes to list
+        for (Coordinate coordinate : graph.keySet()) {
+            distance.put(coordinate, coordinate.equals(start) ? 0 : Integer.MAX_VALUE);
+            nodeList.add(coordinate);
+        }
+
+        while (!nodeList.isEmpty()) {
+            Coordinate current = null;
+            int smallestDistance = Integer.MAX_VALUE;
+
+            // Find node with the smallest distance
+            for (Coordinate node : nodeList) {
+                int nodeDistance = distance.get(node);
+                if (nodeDistance < smallestDistance) {
+                    smallestDistance = nodeDistance;
+                    current = node;
+                }
+            }
+            nodeList.remove(current);
+
+            if (markAndStoreStep(start, finish, allSteps, current)) {
+                break;
+            }
+
+            // Loop through all neighbors of current node
+            for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
+                Coordinate neighbor = entry.getKey();
+                int currentDistance = distance.get(current);
+                int neighborDistance = distance.get(neighbor);
+                int newDistance = currentDistance + entry.getValue();
+
+                if (newDistance < neighborDistance) {
+                    distance.put(neighbor, newDistance);
+                    previous.put(neighbor, current);
+                }
+            }
+        }
+
+        System.out.println("Time to run dijkstra's: " + (System.nanoTime() - startTime) / 1000000 + " ms");
+
+        // Generate final path by backtracking from finish to start
+        if (previous.containsKey(finish)) {
+            connectFinishingPath(finish, allSteps, previous);
+        }
+        return allSteps;
+
+    }
+
+    /**
+     * Stores the current step with state based on location. Start and finish is will still be marked START/FINISH.
+     *
+     * @param start start coordinate
+     * @param finish finish coordinate
+     * @param allSteps queue to add the step
+     * @param current current coordinate to include in step
+     * @return true if current is equal to finish, else false.
+     */
+    private boolean markAndStoreStep(Coordinate start, Coordinate finish, Queue<MazeTraversalStep> allSteps, Coordinate current) {
+        MazeTraversalStep step;
+        if (current.equals(finish)) {
+            step = new MazeTraversalStep(current, Cell.FINISH);
+            allSteps.add(step);
+            return true;
+        } else if (current.equals(start)) {
+            step = new MazeTraversalStep(current, Cell.START);
+        } else {
+            step = new MazeTraversalStep(current, Cell.VISITED);
+        }
+        allSteps.add(step);
+        return false;
+    }
+
     /**
      * Add all steps traveled from finish to start to the allSteps queue.
-     * @param finish finish coordinate
+     *
+     * @param finish   finish coordinate
      * @param allSteps queue to add the steps to
      * @param previous map containing the path taken between nodes (in order to backtrack from finish to start)
      */
@@ -257,13 +334,6 @@ public class MazeSolver {
         System.out.println("Time to generate final path: " + (System.nanoTime() - startTime) / 1000000 + " ms");
     }
 
-    public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
-        //TODO this.maze ....
-        System.out.println("start: " + start);
-        System.out.println("finish: " + finish);
-
-        return Testing.generateTraversalSteps(maze.length, maze[0].length);
-    }
 
     /**
      * Iterate over each cell in the maze and insert a node at each spot that is not part of a continuous path.
@@ -299,7 +369,8 @@ public class MazeSolver {
                             }
                             offset++;
                         }
-                    };
+                    }
+                    ;
                     if (j - 1 >= 0 && maze[i][j - 1] != Cell.WALL) { // Search left
                         int offset = 1;
                         while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) {
@@ -311,7 +382,8 @@ public class MazeSolver {
                             }
                             offset++;
                         }
-                    };
+                    }
+                    ;
                 }
             }
         }
@@ -348,6 +420,9 @@ public class MazeSolver {
         return !horizontalPath && !verticalPath;
     }
 
-    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {};
+    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {
+    }
+
+    ;
 
 }
