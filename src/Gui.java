@@ -18,6 +18,7 @@ public class Gui extends JFrame {
     private JPanel mazePanel;
     private JButton selectButton;
     private JButton aStarButton;
+    private JButton greedyAstarButton;
     private JButton dijkstraButton;
     private JButton dijkstraButton2;
     private JButton resetMazeButton;
@@ -73,6 +74,7 @@ public class Gui extends JFrame {
     private void initComponents() {
         this.selectButton = new JButton("Select Maze");
         this.aStarButton = new JButton("A*");
+        this.greedyAstarButton = new JButton("Greedy A*");
         this.dijkstraButton = new JButton("Dijkstra");
         this.dijkstraButton2 = new JButton("Dijkstra2");
         this.resetMazeButton = new JButton("Reset Maze");
@@ -88,6 +90,7 @@ public class Gui extends JFrame {
         this.buttonPanel.add(this.selectButton);
         this.buttonPanel.add(this.resetMazeButton);
         this.buttonPanel.add(this.aStarButton);
+        this.buttonPanel.add(this.greedyAstarButton);
         this.buttonPanel.add(this.dijkstraButton);
         this.buttonPanel.add(this.dijkstraButton2);
 
@@ -101,6 +104,10 @@ public class Gui extends JFrame {
 
     public void setSelectButtonListener(ActionListener listener) {
         this.selectButton.addActionListener(listener);
+    }
+
+    public void setGreedyAstarButtonListener(ActionListener listener) {
+        this.greedyAstarButton.addActionListener(listener);
     }
 
     public void setAstarButtonListener(ActionListener listener) {
@@ -242,6 +249,8 @@ public class Gui extends JFrame {
     private void setButtonStates(Boolean value, JButton exception) {
         if (!(this.selectButton == exception))
             this.selectButton.setEnabled(value);
+        if (!(this.greedyAstarButton == exception))
+            this.greedyAstarButton.setEnabled(value);
         if (!(this.aStarButton == exception))
             this.aStarButton.setEnabled(value);
         if (!(this.dijkstraButton == exception))

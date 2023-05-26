@@ -25,13 +25,12 @@ public class Controller {
         ));
 
         this.gui.setAstarButtonListener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), true));
+            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), false));
         });
 
-        //TODO Astar knapp 2
-//        this.gui.setAstarButtonListener((event) -> {
-//            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), false));
-//        });
+        this.gui.setGreedyAstarButtonListener((event) -> {
+            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), true));
+        });
 
         this.gui.setDijkstraButtonListener((event) -> {
             this.gui.replaySearchProcedure(this.solver.dijkstra1(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
