@@ -27,6 +27,7 @@ public class MazeSolver {
      * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
      */
     public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
+        long startTime = System.nanoTime();
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
         // Map to store total cost/weight/distance of all searched nodes.
         // The Coordinate is one of the nodes and the integer is the distance traveled from start to that node in a
@@ -46,11 +47,18 @@ public class MazeSolver {
 
         while (!priorityQueue.isEmpty()) {
             Coordinate current = priorityQueue.poll();
-            allSteps.add(new MazeTraversalStep(current, Cell.VISITED));
+            MazeTraversalStep step;
 
             if (current.equals(finish)) {
+                step = new MazeTraversalStep(current, Cell.FINISH);
+                allSteps.add(step);
                 break;
+            } else if (current.equals(start)) {
+                step = new MazeTraversalStep(current, Cell.START);
+            } else {
+                step = new MazeTraversalStep(current, Cell.VISITED);
             }
+            allSteps.add(step);
 
             // Loop through all neighbors of current node
             for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
@@ -69,6 +77,8 @@ public class MazeSolver {
             }
         }
 
+        System.out.println("Time to run dijkstra's: " + (System.nanoTime() - startTime) / 1000000 + " ms");
+
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
             connectFinishingPath(finish, allSteps, previous);
@@ -84,6 +94,7 @@ public class MazeSolver {
      */
     private static void connectFinishingPath(Coordinate finish, Queue<MazeTraversalStep> allSteps, Map<Coordinate, Coordinate> previous) {
         Coordinate pos = finish;
+        long startTime = System.nanoTime();
         while (pos != null) {
             // Generate MazeTraversalStep for each coordinate in the final path
             Coordinate newPos = previous.get(pos);
@@ -121,6 +132,7 @@ public class MazeSolver {
             }
             pos = newPos;
         }
+        System.out.println("Time to generate final path: " + (System.nanoTime() - startTime) / 1000000 + " ms");
     }
 
     public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
@@ -143,6 +155,7 @@ public class MazeSolver {
         HashMap<Coordinate, Node> graph = new HashMap<>();
         int rows = this.maze.length;
         int cols = this.maze[0].length;
+        long startTime = System.nanoTime();
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 if (maze[i][j] == Cell.WALL) {
@@ -180,6 +193,7 @@ public class MazeSolver {
                 }
             }
         }
+        System.out.println("Time to generate graph: " + (System.nanoTime() - startTime) / 1000000 + " ms");
         return graph;
     }
 

@@ -286,7 +286,8 @@ public class Gui extends JFrame {
                 for (MazeTraversalStep step : chunks) {
                     graphicalMaze[step.coordinate().row()][step.coordinate().col()].setBackground(translateStateToColor(step.newState()));
                     changedCells.add(step.coordinate());
-                    incrementStepsCounter();
+                    if (step.newState() != Cell.PATH)
+                        incrementStepsCounter();
                 }
             }
 
