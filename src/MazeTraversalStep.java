@@ -23,6 +23,10 @@ public class MazeTraversalStep {
         this.state = state;
     }
 
+    public void setStepNumber(int stepNumber) {
+        this.stepNumber = stepNumber;
+    }
+
     public Cell getState() {
         return state;
     }

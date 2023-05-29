@@ -37,12 +37,15 @@ public class MazeSolver {
         procedure.put(start, startCell);
         cellPriorityQueue.add(startCell);
         while (!cellPriorityQueue.isEmpty()) {
+            currentStepNumber++;
             var currentStep = cellPriorityQueue.poll();
             currentStep.setState(Cell.VISITED);
-            currentStepNumber++;
 
-            if (currentStep.getLocation().equals(goal)) // We found the goal coordinate
+            if (currentStep.getLocation().equals(goal)) { // We found the goal coordinate
+                currentStep.setStepNumber(currentStepNumber);
+                procedure.put(currentStep.getLocation(), currentStep);
                 return parseResult(procedure);
+            }
 
             for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Parse all neighbours
                 var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
@@ -370,7 +373,6 @@ public class MazeSolver {
                             offset++;
                         }
                     }
-                    ;
                     if (j - 1 >= 0 && maze[i][j - 1] != Cell.WALL) { // Search left
                         int offset = 1;
                         while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) {
@@ -383,7 +385,6 @@ public class MazeSolver {
                             offset++;
                         }
                     }
-                    ;
                 }
             }
         }
@@ -420,9 +421,6 @@ public class MazeSolver {
         return !horizontalPath && !verticalPath;
     }
 
-    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {
-    }
-
-    ;
+    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {}
 
 }
