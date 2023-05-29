@@ -23,7 +23,7 @@ public class MazeSolver {
     public Queue<MazeTraversalStep> aStar(Coordinate start, Coordinate goal, boolean greedy) {
 
         var procedure = new HashMap<Coordinate, MazeTraversalStep>();
-        var cellPriorityQueue = new PriorityQueue<>( //The order to visit the cells
+        var cellPriorityQueue = new PriorityQueue<>( //The order to process the cells
                 Comparator.comparingInt(greedy ? MazeTraversalStep::getHeuristicsCost : MazeTraversalStep::totalCost));
         int currentStepNumber = 0;
         var startCell = new MazeTraversalStep(
@@ -47,7 +47,7 @@ public class MazeSolver {
                 return parseResult(procedure);
             }
 
-            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Parse all neighbours
+            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Process all neighbours
 
                 if (maze[neighbour.row()][neighbour.col()] == Cell.WALL)
                     continue;
@@ -65,11 +65,11 @@ public class MazeSolver {
                 // A shorter path to the neighbour has been found
                 if (estimatedCostToNeighbour < neighbourCell.getInitialCost()) {
                     neighbourCell.setInitialCost(estimatedCostToNeighbour);
+                    procedure.put(neighbour, neighbourCell);
 
-                    // The neighbour has not been visited, queue it for traversal
+                    // The neighbour has not been visited, queue it for processing
                     if (!cellPriorityQueue.contains(neighbourCell))
                         cellPriorityQueue.add(neighbourCell);
-                        procedure.put(neighbour, neighbourCell);
                 }
             }
         }
