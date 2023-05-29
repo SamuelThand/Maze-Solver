@@ -43,6 +43,9 @@ public class MazeTraversalStep {
         return parentLocation;
     }
 
+    public void setInitialCost(int initialCost) {
+        this.initialCost = initialCost;
+    }
 
     public int getInitialCost() {
         return initialCost;

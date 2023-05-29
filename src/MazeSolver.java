@@ -56,25 +56,20 @@ public class MazeSolver {
                 // Get the neighbour cell step or create a new traversable step if it's not mapped yet
                 var neighbourCell = procedure.getOrDefault(neighbour, new MazeTraversalStep(
                         currentStepNumber,
-                        neighbour, currentStep.getLocation(),
+                        neighbour,
+                        currentStep.getLocation(),
                         Integer.MAX_VALUE,
                         calculateHeuristicsCost(neighbour, goal),
                         Cell.TRAVERSABLE));
 
                 // A shorter path to the neighbour has been found
                 if (estimatedCostToNeighbour < neighbourCell.getInitialCost()) {
-                    neighbourCell = new MazeTraversalStep(
-                            currentStepNumber,
-                            neighbour,
-                            currentStep.getLocation(),
-                            estimatedCostToNeighbour,
-                            neighbourCell.getHeuristicsCost(),
-                            Cell.TRAVERSABLE);
-                    procedure.put(neighbour, neighbourCell);
+                    neighbourCell.setInitialCost(estimatedCostToNeighbour);
 
-                    // The neighbour has not been visited
+                    // The neighbour has not been visited, queue it for traversal
                     if (!cellPriorityQueue.contains(neighbourCell))
                         cellPriorityQueue.add(neighbourCell);
+                        procedure.put(neighbour, neighbourCell);
                 }
             }
         }
