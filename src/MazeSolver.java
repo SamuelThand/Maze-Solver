@@ -48,9 +48,8 @@ public class MazeSolver {
             }
 
             for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Parse all neighbours
-                var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
-                var neighbourIsVisited = maze[neighbour.row()][neighbour.col()] == Cell.VISITED;
-                if (neighbourIsWall || neighbourIsVisited)
+
+                if (maze[neighbour.row()][neighbour.col()] == Cell.WALL)
                     continue;
 
                 int estimatedCostToNeighbour = currentStep.getInitialCost() + 1;
