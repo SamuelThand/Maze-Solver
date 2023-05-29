@@ -10,8 +10,6 @@ import java.util.function.Function;
 
 public class Gui extends JFrame {
 
-    //TODO refactor cells to have their own coordinate, then optimize
-
     private final Dimension frameSize;
     private JPanel buttonPanel;
     private JPanel stepsPanel;
@@ -223,7 +221,7 @@ public class Gui extends JFrame {
                 this.mazePanel.add(button);
             }
 
-        this.unsolvedMaze = maze.clone(); // TODO problem med att samma maze delas av front och backend
+        this.unsolvedMaze = maze.clone();
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
@@ -231,7 +229,7 @@ public class Gui extends JFrame {
     private void repaintMaze() {
         for (Coordinate changedCell : this.changedCells)
                 this.graphicalMaze[changedCell.row()][changedCell.col()].setBackground(
-                        translateStateToColor(this.unsolvedMaze[changedCell.row()][changedCell.col()])); //TODO problemet är att unsolvedmaze ändras av algoritmen
+                        translateStateToColor(this.unsolvedMaze[changedCell.row()][changedCell.col()]));
     }
 
     private static Color translateStateToColor(Cell cell) {
