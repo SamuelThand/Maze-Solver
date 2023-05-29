@@ -1,11 +1,8 @@
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MazeLoader {
@@ -26,7 +23,6 @@ public class MazeLoader {
         int pathSize = findSmallestContinuousWhite(bImage);
         int width = bImage.getWidth();
         int height = bImage.getHeight();
-        long startTime = System.nanoTime(); // TODO: Remove when no time measurement is needed
 
         Cell[][] maze = new Cell[height][width];
 
@@ -36,21 +32,7 @@ public class MazeLoader {
                 maze[y][x] = isNotWall(bImage.getRGB(x, y)) ? Cell.TRAVERSABLE : Cell.WALL;
             }
         }
-        maze = reduceMaze(maze, pathSize);
-        // TODO: Remove when no time measurement is needed
-        long endTime = System.nanoTime();
-        System.out.println("Time to load and reduce maze: " + (endTime - startTime) / 1000000 + " ms");
-
-        // TODO: Remove when no text representation of maze is needed
-        try (PrintWriter writer = new PrintWriter("src/maze.txt")) {
-            for (Cell[] cells : maze) {
-                writer.println(Arrays.toString(cells));
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return maze;
+        return reduceMaze(maze, pathSize);
     }
 
     /**
@@ -66,13 +48,14 @@ public class MazeLoader {
         int skipSize = pathSize + wallSize;
         List<Cell[]> reducedMaze = new ArrayList<>();
 
+        // Start at the row where the last top wall cell is, store two rows and increment with skipSize to get to the
+        // last pixel of the next wall.
         for (int i = wallSize - 1; i < height; i += skipSize) {
-            reducedMaze.add(reduceCellByInterval(maze[i], skipSize, wallSize));
+            reducedMaze.add(reduceRowByInterval(maze[i], skipSize, wallSize));
             if (i + 1 < height) {
-                reducedMaze.add(reduceCellByInterval(maze[i + 1], skipSize, wallSize));
+                reducedMaze.add(reduceRowByInterval(maze[i + 1], skipSize, wallSize));
             }
         }
-
         return reducedMaze.toArray(new Cell[0][0]);
     }
 
@@ -82,10 +65,12 @@ public class MazeLoader {
      * @param skipSize size of the path
      * @return compressed version of the row without null values
      */
-    private Cell[] reduceCellByInterval(Cell[] row, int skipSize, int wallSize) {
+    private Cell[] reduceRowByInterval(Cell[] row, int skipSize, int wallSize) {
         int width = row.length;
         List<Cell> reducedMaze = new ArrayList<>();
 
+        // Start at the index where the last left wall cell is, store two cells and increment with skipSize to get to the
+        // last pixel of the next wall.
         for (int i = wallSize - 1; i < width; i += skipSize) {
             if (i - wallSize < 0) {
                 reducedMaze.add(row[i]);
@@ -312,6 +297,4 @@ public class MazeLoader {
         }
         return startCoords;
     }
-
-
 }
