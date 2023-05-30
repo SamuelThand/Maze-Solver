@@ -141,7 +141,8 @@ public class MazeSolver {
 
     /**
      * Dijkstra's algorithm using a priority queue and graph.
-     *
+     * Time complexity: O((v+e) log v)
+     * Where v is vertices, e is edges, n is the height of the maze and m is the width of the maze.
      * @param start  Coordinate to start at
      * @param finish Coordinate to finish at
      * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
@@ -155,23 +156,23 @@ public class MazeSolver {
         Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
         // PriorityQueue used to keep track of next least expensive path to take.
         Queue<Coordinate> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(a -> distance.getOrDefault(a, Integer.MAX_VALUE)));
-        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze. Time complexity: O(n(n+m))
 
         // Initialize distance to all nodes to infinity, except for start node which is 0
         // Also add all nodes to the priority queue
-        for (Coordinate coordinate : graph.keySet()) {
+        for (Coordinate coordinate : graph.keySet()) { // Time complexity: O(v)
             distance.put(coordinate, coordinate.equals(start) ? 0 : Integer.MAX_VALUE);
             priorityQueue.offer(coordinate);
         }
 
-        while (!priorityQueue.isEmpty()) {
-            Coordinate current = priorityQueue.poll();
+        while (!priorityQueue.isEmpty()) { // O(v log v)
+            Coordinate current = priorityQueue.poll(); // O(log v)
             if (markAndStoreStep(start, finish, allSteps, current)) {
                 break;
             }
 
             // Loop through all neighbors of current node
-            for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
+            for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) { // O(e)
                 Coordinate neighbor = entry.getKey();
                 int currentDistance = distance.get(current);
                 int neighborDistance = distance.get(neighbor);
@@ -181,19 +182,27 @@ public class MazeSolver {
                     distance.put(neighbor, newDistance);
                     previous.put(neighbor, current);
                     // Distance is changed, update position in queue
-                    priorityQueue.remove(neighbor);
-                    priorityQueue.offer(neighbor);
+                    priorityQueue.remove(neighbor); // O(v)
+                    priorityQueue.offer(neighbor); // O(log v)
                 }
             }
         }
 
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
-            connectFinishingPath(finish, allSteps, previous);
+            connectFinishingPath(finish, allSteps, previous); // Time complexity: O(nm)
         }
         return allSteps;
     }
 
+    /**
+     * Dijkstra's algorithm using an arrayList.
+     * Time complexity: O(v^2+e)
+     * Where v is vertices and e is edges.
+     * @param start  Coordinate to start at
+     * @param finish Coordinate to finish at
+     * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
+     */
     public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
         // Map to store total cost/weight/distance of all searched nodes.
@@ -202,35 +211,35 @@ public class MazeSolver {
         Map<Coordinate, Integer> distance = new HashMap<>();
         Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
         List<Coordinate> nodeList = new ArrayList<>(); // List containing nodes
-        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // O(n(n+m))
 
         // Initialize distance to all nodes to infinity, except for start node which is 0
         // Also add all nodes to list
-        for (Coordinate coordinate : graph.keySet()) {
+        for (Coordinate coordinate : graph.keySet()) { // O(v)
             distance.put(coordinate, coordinate.equals(start) ? 0 : Integer.MAX_VALUE);
             nodeList.add(coordinate);
         }
 
-        while (!nodeList.isEmpty()) {
+        while (!nodeList.isEmpty()) { // O(v^2+e)
             Coordinate current = null;
             int smallestDistance = Integer.MAX_VALUE;
 
             // Find node with the smallest distance
-            for (Coordinate node : nodeList) {
+            for (Coordinate node : nodeList) { // O(v)
                 int nodeDistance = distance.get(node);
                 if (nodeDistance < smallestDistance) {
                     smallestDistance = nodeDistance;
                     current = node;
                 }
             }
-            nodeList.remove(current);
+            nodeList.remove(current); // O(v)
 
             if (markAndStoreStep(start, finish, allSteps, current)) {
                 break;
             }
 
             // Loop through all neighbors of current node
-            for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) {
+            for (Map.Entry<Coordinate, Integer> entry : graph.get(current).neighbor().entrySet()) { // O(e)
                 Coordinate neighbor = entry.getKey();
                 int currentDistance = distance.get(current);
                 int neighborDistance = distance.get(neighbor);
@@ -245,14 +254,14 @@ public class MazeSolver {
 
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
-            connectFinishingPath(finish, allSteps, previous);
+            connectFinishingPath(finish, allSteps, previous); // O(nm)
         }
         return allSteps;
     }
 
     /**
      * Stores the current step with state based on location. Start and finish is will still be marked START/FINISH.
-     *
+     * Time complexity: O(1)
      * @param start start coordinate
      * @param finish finish coordinate
      * @param allSteps queue to add the step
@@ -276,15 +285,15 @@ public class MazeSolver {
 
     /**
      * Add all steps traveled from finish to start to the allSteps queue.
-     *
+     * Time complexity: O(nm)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param finish   finish coordinate
      * @param allSteps queue to add the steps to
      * @param previous map containing the path taken between nodes (in order to backtrack from finish to start)
      */
     private static void connectFinishingPath(Coordinate finish, Queue<MazeTraversalStep> allSteps, Map<Coordinate, Coordinate> previous) {
         Coordinate pos = finish;
-        long startTime = System.nanoTime();
-        while (pos != null) {
+        while (pos != null) { // Time complexity: O(nm)
             // Generate MazeTraversalStep for each coordinate in the final path
             Coordinate newPos = previous.get(pos);
             if (newPos != null) {
@@ -294,12 +303,12 @@ public class MazeSolver {
                     int newCol = newPos.col();
                     if (prevCol < newCol) {
                         // Moving right
-                        for (int col = prevCol; col <= newCol; col++) {
+                        for (int col = prevCol; col <= newCol; col++) { // Time complexity: O(m)
                             allSteps.add(new MazeTraversalStep(new Coordinate(pos.row(), col), Cell.PATH));
                         }
                     } else {
                         // Moving left
-                        for (int col = prevCol; col >= newCol; col--) {
+                        for (int col = prevCol; col >= newCol; col--) { // Time complexity: O(m)
                             allSteps.add(new MazeTraversalStep(new Coordinate(pos.row(), col), Cell.PATH));
                         }
                     }
@@ -308,12 +317,12 @@ public class MazeSolver {
                     int newRow = newPos.row();
                     if (prevRow < newRow) {
                         // Moving down
-                        for (int row = prevRow; row <= newRow; row++) {
+                        for (int row = prevRow; row <= newRow; row++) { // Time complexity: O(n)
                             allSteps.add(new MazeTraversalStep(new Coordinate(row, pos.col()), Cell.PATH));
                         }
                     } else {
                         // Moving up
-                        for (int row = prevRow; row >= newRow; row--) {
+                        for (int row = prevRow; row >= newRow; row--) { // Time complexity: O(n)
                             allSteps.add(new MazeTraversalStep(new Coordinate(row, pos.col()), Cell.PATH));
                         }
                     }
@@ -321,13 +330,13 @@ public class MazeSolver {
             }
             pos = newPos;
         }
-        System.out.println("Time to generate final path: " + (System.nanoTime() - startTime) / 1000000 + " ms");
     }
 
 
     /**
      * Iterate over each cell in the maze and insert a node at each spot that is not part of a continuous path.
-     *
+     * Time complexity: O(n(n+m))
+     * Where n is the height of the maze and m is the width of the maze.
      * @param start  force insertion of a node at start
      * @param finish force insertion of a node at finish
      * @return graph representation of the maze
@@ -337,9 +346,8 @@ public class MazeSolver {
         HashMap<Coordinate, Node> graph = new HashMap<>();
         int rows = this.maze.length;
         int cols = this.maze[0].length;
-        long startTime = System.nanoTime();
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
+        for (int i = 0; i < rows; i++) { // Time complexity: O(n(n+m))
+            for (int j = 0; j < cols; j++) { // Time complexity: O(n+m)
                 if (maze[i][j] == Cell.WALL) {
                     continue;
                 }
@@ -350,7 +358,7 @@ public class MazeSolver {
                     graph.put(current, node);
                     if (i - 1 >= 0 && maze[i - 1][j] != Cell.WALL) { // Search up
                         int offset = 1;
-                        while (i - offset >= 0 && maze[i - offset][j] != Cell.WALL) {
+                        while (i - offset >= 0 && maze[i - offset][j] != Cell.WALL) { // Time complexity: O(n)
                             Coordinate searchPos = new Coordinate(i - offset, j);
                             if (graph.containsKey(searchPos)) {
                                 neighbors.put(searchPos, offset);
@@ -362,7 +370,7 @@ public class MazeSolver {
                     }
                     if (j - 1 >= 0 && maze[i][j - 1] != Cell.WALL) { // Search left
                         int offset = 1;
-                        while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) {
+                        while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) { // Time complexity: O(m)
                             Coordinate searchPos = new Coordinate(i, j - offset);
                             if (graph.containsKey(searchPos)) {
                                 neighbors.put(searchPos, offset);
@@ -375,13 +383,12 @@ public class MazeSolver {
                 }
             }
         }
-        System.out.println("Time to generate graph: " + (System.nanoTime() - startTime) / 1000000 + " ms");
         return graph;
     }
 
     /**
      * Checks if the given pos is not part of a continuous path.
-     *
+     * Time complexity: O(1)
      * @param pos    position to check
      * @param start  if pos is start, return true
      * @param finish if pos is finish, return true
