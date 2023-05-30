@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A class that loads a maze image and converts it into a scaled down 2D array representation of the maze.
+ */
 public class MazeLoader {
 
     private static final int WALL_COLOR = -16000000;
@@ -15,20 +18,28 @@ public class MazeLoader {
 
     /**
      * Load the maze image into a 2D array representation of the maze.
+     * The image should be jpg and the maze should be black and white, where black is a wall and white is a path.
+     * The maze is created in three steps:
+     * 1. Remove the white border around the maze.
+     * 2. Create a full scale 2D array representation of the maze.
+     * 3. Reduce the maze to a compressed version where the path and wall is only one cell wide.
+     * Time complexity heavily relies on the size of the image.
+     * Time complexity: O(nm)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param mazeImage image of the maze
      * @return 2D array of cells
      */
     public Cell[][] loadMaze(File mazeImage) {
         BufferedImage bImage = this.processImage(mazeImage);
-        int pathSize = findSmallestContinuousWhite(bImage);
+        int pathSize = findSmallestContinuousWhite(bImage); // Time complexity: O(n+m)
         int width = bImage.getWidth();
         int height = bImage.getHeight();
 
         Cell[][] maze = new Cell[height][width];
 
         // Create an array of cells that represents the full scale maze.
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) { // Time complexity: O(nm)
+            for (int x = 0; x < width; x++) { // Time complexity: O(n)
                 maze[y][x] = isNotWall(bImage.getRGB(x, y)) ? Cell.TRAVERSABLE : Cell.WALL;
             }
         }
@@ -37,7 +48,8 @@ public class MazeLoader {
 
     /**
      * Reduces the full scale maze array to a compressed version where the path and wall is only one cell wide.
-     *
+     * Time complexity: O(nm)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param maze full scale representation of the maze
      * @param pathSize size of the path
      * @return compressed version of the maze
@@ -50,17 +62,19 @@ public class MazeLoader {
 
         // Start at the row where the last top wall cell is, store two rows and increment with skipSize to get to the
         // last pixel of the next wall.
-        for (int i = wallSize - 1; i < height; i += skipSize) {
-            reducedMaze.add(reduceRowByInterval(maze[i], skipSize, wallSize));
+        for (int i = wallSize - 1; i < height; i += skipSize) { // Time complexity: O(nm)
+            reducedMaze.add(reduceRowByInterval(maze[i], skipSize, wallSize)); // Time complexity: O(m)
             if (i + 1 < height) {
-                reducedMaze.add(reduceRowByInterval(maze[i + 1], skipSize, wallSize));
+                reducedMaze.add(reduceRowByInterval(maze[i + 1], skipSize, wallSize)); // Time complexity: O(m)
             }
         }
-        return reducedMaze.toArray(new Cell[0][0]);
+        return reducedMaze.toArray(new Cell[0][0]); // Time complexity: O(nm)
     }
 
     /**
-     *
+     * Reduces the full scale row to a compressed version where the path and wall is only one cell wide.
+     * Time complexity: O(m)
+     * Where m is the width of the maze.
      * @param row full scale representation of a row in the maze
      * @param skipSize size of the path
      * @return compressed version of the row without null values
@@ -71,7 +85,7 @@ public class MazeLoader {
 
         // Start at the index where the last left wall cell is, store two cells and increment with skipSize to get to the
         // last pixel of the next wall.
-        for (int i = wallSize - 1; i < width; i += skipSize) {
+        for (int i = wallSize - 1; i < width; i += skipSize) { // Time complexity: O(m)
             if (i - wallSize < 0) {
                 reducedMaze.add(row[i]);
             } else {
@@ -89,6 +103,8 @@ public class MazeLoader {
     /**
      * Estimates the wall width by iterating from the edge of the maze and inwards.
      * Starts at 1/7 of the height and iterates every 1/7 + 1 of the height.
+     * Time complexity: O(nm)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param maze full scale representation of the maze
      * @return estimated wall width
      */
@@ -97,9 +113,9 @@ public class MazeLoader {
         int height = maze.length;
         int wallWidth = 0;
 
-        for (int i = height / 7; i < height; i += height / 7 + 1) {
+        for (int i = height / 7; i < height; i += height / 7 + 1) { // Time complexity: O(nm)
             int currentWidth = 0;
-            for (int j = 0; j < width; j++) {
+            for (int j = 0; j < width; j++) { // Time complexity: O(m)
                 if (maze[i][j] == Cell.WALL) {
                     currentWidth++;
                 } else {
@@ -115,10 +131,12 @@ public class MazeLoader {
     /**
      * Iterates over the edges and finds the smallest continuous white area.
      * This is used to determine the size of the path.
+     * Time complexity: O(n+m)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param image image of the maze
      * @return size of the path
      */
-    public static int findSmallestContinuousWhite(BufferedImage image) {
+    private static int findSmallestContinuousWhite(BufferedImage image) {
         int smallestWhite = Integer.MAX_VALUE;
         int currentWhite = 0;
         int badPixelThreshold = 2;
@@ -127,7 +145,7 @@ public class MazeLoader {
         boolean foundWhite = false;
 
         // Iterate over the top edge (left to right)
-        for (int i = 0; i < width; i++) {
+        for (int i = 0; i < width; i++) { // Time complexity: O(m)
             if (isNotWall(image.getRGB(i, 0)) && i != width - 1) {
                 currentWhite++;
                 foundWhite = true;
@@ -141,7 +159,7 @@ public class MazeLoader {
         }
 
         // Iterate over the right edge (top to bottom)
-        for (int i = 0; i < height; i++) {
+        for (int i = 0; i < height; i++) { // Time complexity: O(n)
             if (isNotWall(image.getRGB(width - 1, i)) && i != height - 1) {
                 currentWhite++;
                 foundWhite = true;
@@ -155,7 +173,7 @@ public class MazeLoader {
         }
 
         // Iterate over the bottom edge (right to left)
-        for (int i = width - 1; i >= 0; i--) {
+        for (int i = width - 1; i >= 0; i--) { // Time complexity: O(m)
             if (isNotWall(image.getRGB(i, height - 1)) && i != 0) {
                 currentWhite++;
                 foundWhite = true;
@@ -169,7 +187,7 @@ public class MazeLoader {
         }
 
         // Iterate over the left edge (bottom to top)
-        for (int i = height - 1; i >= 0; i--) {
+        for (int i = height - 1; i >= 0; i--) { // Time complexity: O(n)
             if (isNotWall(image.getRGB(0, i)) && i != 0) {
                 currentWhite++;
                 foundWhite = true;
@@ -182,13 +200,12 @@ public class MazeLoader {
             }
         }
 
-        // TODO: Remove print when no longer needed
-        System.out.println("Found path size of: " + smallestWhite);
         return smallestWhite;
     }
 
     /**
      * Checks if the given color is not a wall (black).
+     * Time complexity: O(1)
      * @param color color to check
      * @return true if the color is not a wall
      */
@@ -199,7 +216,8 @@ public class MazeLoader {
 
     /**
      * Processes the given image to remove the white borders.
-     *
+     * Time complexity: O(n+m)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param mazeImage image of the maze
      * @return the given image with white borders removed.
      */
@@ -210,10 +228,7 @@ public class MazeLoader {
             image = ImageIO.read(mazeImage);
 
             // Process the image
-            image = removeBorders(image);
-            // Save the image, for demonstration purposes only
-            // TODO: Remove this when image representation is no longer needed
-            ImageIO.write(image, "jpg", new File("src/new-maze.jpg"));
+            image = removeBorders(image); // Time complexity: O(n+m)
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -223,14 +238,14 @@ public class MazeLoader {
 
     /**
      * Removes white borders form a black and white maze image.
-     *
+     * Time complexity: O(n+m)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param image image containing black and white maze
      * @return the given image with white borders removed.
      */
     private BufferedImage removeBorders(BufferedImage image) {
         int width = image.getWidth();
         int height = image.getHeight();
-        System.out.println("Height: " + height + " Width: " + width);
 
         // Define variables to store measurement results
         int[][] measurements = new int[4][2];
@@ -245,17 +260,17 @@ public class MazeLoader {
         Direction[] directions = {Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP};
 
         // Perform measurements on each side
-        for (int i = 0; i < 4; i++) {
-            int[] firstMeasurement = findFirstWall(image, directions[i], startCoords[i]);
+        for (int i = 0; i < 4; i++) { // Time complexity: O(n+m)
+            int[] firstMeasurement = findFirstWall(image, directions[i], startCoords[i]); // Time complexity: O(n) or O(m)
             int[] secondMeasurement;
-            do {
+            do { // Time complexity: O(n) or O(m)
                 // Update start coordinates for the second measurement
                 // If direction against the wall is horizontal, move start coordinates along the vertical axis
                 startCoords[i][0] += (directions[i] == Direction.UP || directions[i] == Direction.DOWN) ? height / 6 : 0;
                 // If direction against the wall is vertical, move start coordinates along the horizontal axis
                 startCoords[i][1] += (directions[i] == Direction.LEFT || directions[i] == Direction.RIGHT) ? width / 6 : 0;
 
-                secondMeasurement = findFirstWall(image, directions[i], startCoords[i]);
+                secondMeasurement = findFirstWall(image, directions[i], startCoords[i]); // Time complexity: O(n) or O(m)
 
                 // Continue until the first and second measurement are the same
                 // i 0 and 2 are x-coordinate measures, 1 and 3 are y-coordinate measures
@@ -278,7 +293,8 @@ public class MazeLoader {
 
     /**
      * Iterate through the image from the given start coordinates towards the given direction.
-     *
+     * Time complexity: O(n) or O(m)
+     * Where n is the height of the maze and m is the width of the maze.
      * @param image       to search through
      * @param direction   towards the middle of the image
      * @param startCoords to begin at
@@ -287,7 +303,7 @@ public class MazeLoader {
     private int[] findFirstWall(BufferedImage image, Direction direction, int[] startCoords) {
         while (startCoords[0] >= 0 && startCoords[0] < image.getWidth() &&
                 startCoords[1] >= 0 && startCoords[1] < image.getHeight() &&
-                image.getRGB(startCoords[0], startCoords[1]) > WALL_COLOR) { // Threshold set close to black
+                image.getRGB(startCoords[0], startCoords[1]) > WALL_COLOR) { // Time complexity: O(n) or O(m)
             switch (direction) {
                 case UP -> startCoords[1] -= 1;
                 case DOWN -> startCoords[1] += 1;
