@@ -23,6 +23,10 @@ public class MazeTraversalStep {
         this.state = state;
     }
 
+    public void setStepNumber(int stepNumber) {
+        this.stepNumber = stepNumber;
+    }
+
     public Cell getState() {
         return state;
     }
@@ -39,6 +43,9 @@ public class MazeTraversalStep {
         return parentLocation;
     }
 
+    public void setInitialCost(int initialCost) {
+        this.initialCost = initialCost;
+    }
 
     public int getInitialCost() {
         return initialCost;

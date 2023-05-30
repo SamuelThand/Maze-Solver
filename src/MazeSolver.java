@@ -23,7 +23,7 @@ public class MazeSolver {
     public Queue<MazeTraversalStep> aStar(Coordinate start, Coordinate goal, boolean greedy) {
 
         var procedure = new HashMap<Coordinate, MazeTraversalStep>();
-        var cellPriorityQueue = new PriorityQueue<>( //The order to visit the cells
+        var cellPriorityQueue = new PriorityQueue<>( //The order to process the cells
                 Comparator.comparingInt(greedy ? MazeTraversalStep::getHeuristicsCost : MazeTraversalStep::totalCost));
         int currentStepNumber = 0;
         var startCell = new MazeTraversalStep(
@@ -37,40 +37,37 @@ public class MazeSolver {
         procedure.put(start, startCell);
         cellPriorityQueue.add(startCell);
         while (!cellPriorityQueue.isEmpty()) {
+            currentStepNumber++;
             var currentStep = cellPriorityQueue.poll();
             currentStep.setState(Cell.VISITED);
-            currentStepNumber++;
 
-            if (currentStep.getLocation().equals(goal)) // We found the goal coordinate
+            if (currentStep.getLocation().equals(goal)) { // We found the goal coordinate
+                currentStep.setStepNumber(currentStepNumber);
+                procedure.put(currentStep.getLocation(), currentStep);
                 return parseResult(procedure);
+            }
 
-            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Parse all neighbours
-                var neighbourIsWall = maze[neighbour.row()][neighbour.col()] == Cell.WALL;
-                var neighbourIsVisited = maze[neighbour.row()][neighbour.col()] == Cell.VISITED;
-                if (neighbourIsWall || neighbourIsVisited)
+            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Process all neighbours
+
+                if (maze[neighbour.row()][neighbour.col()] == Cell.WALL)
                     continue;
 
                 int estimatedCostToNeighbour = currentStep.getInitialCost() + 1;
                 // Get the neighbour cell step or create a new traversable step if it's not mapped yet
                 var neighbourCell = procedure.getOrDefault(neighbour, new MazeTraversalStep(
                         currentStepNumber,
-                        neighbour, currentStep.getLocation(),
+                        neighbour,
+                        currentStep.getLocation(),
                         Integer.MAX_VALUE,
                         calculateHeuristicsCost(neighbour, goal),
                         Cell.TRAVERSABLE));
 
                 // A shorter path to the neighbour has been found
                 if (estimatedCostToNeighbour < neighbourCell.getInitialCost()) {
-                    neighbourCell = new MazeTraversalStep(
-                            currentStepNumber,
-                            neighbour,
-                            currentStep.getLocation(),
-                            estimatedCostToNeighbour,
-                            neighbourCell.getHeuristicsCost(),
-                            Cell.TRAVERSABLE);
+                    neighbourCell.setInitialCost(estimatedCostToNeighbour);
                     procedure.put(neighbour, neighbourCell);
 
-                    // The neighbour has not been visited
+                    // The neighbour has not been visited, queue it for processing
                     if (!cellPriorityQueue.contains(neighbourCell))
                         cellPriorityQueue.add(neighbourCell);
                 }
@@ -370,7 +367,6 @@ public class MazeSolver {
                             offset++;
                         }
                     }
-                    ;
                     if (j - 1 >= 0 && maze[i][j - 1] != Cell.WALL) { // Search left
                         int offset = 1;
                         while (j - offset >= 0 && maze[i][j - offset] != Cell.WALL) {
@@ -383,7 +379,6 @@ public class MazeSolver {
                             offset++;
                         }
                     }
-                    ;
                 }
             }
         }
@@ -420,9 +415,6 @@ public class MazeSolver {
         return !horizontalPath && !verticalPath;
     }
 
-    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {
-    }
-
-    ;
+    record Node(Map<Coordinate, Integer> neighbor, Coordinate position) {}
 
 }
