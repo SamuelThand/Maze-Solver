@@ -147,7 +147,6 @@ public class MazeSolver {
      * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
      */
     public Queue<MazeTraversalStep> dijkstra1(Coordinate start, Coordinate finish) {
-        long startTime = System.nanoTime();
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
         // Map to store total cost/weight/distance of all searched nodes.
         // The Coordinate is one of the nodes and the integer is the distance traveled from start to that node in a
@@ -188,8 +187,6 @@ public class MazeSolver {
             }
         }
 
-        System.out.println("Time to run dijkstra's: " + (System.nanoTime() - startTime) / 1000000 + " ms");
-
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
             connectFinishingPath(finish, allSteps, previous);
@@ -198,7 +195,6 @@ public class MazeSolver {
     }
 
     public Queue<MazeTraversalStep> dijkstra2(Coordinate start, Coordinate finish) {
-        long startTime = System.nanoTime();
         Queue<MazeTraversalStep> allSteps = new ArrayDeque<>();
         // Map to store total cost/weight/distance of all searched nodes.
         // The Coordinate is one of the nodes and the integer is the distance traveled from start to that node in a
@@ -247,14 +243,11 @@ public class MazeSolver {
             }
         }
 
-        System.out.println("Time to run dijkstra's: " + (System.nanoTime() - startTime) / 1000000 + " ms");
-
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
             connectFinishingPath(finish, allSteps, previous);
         }
         return allSteps;
-
     }
 
     /**
