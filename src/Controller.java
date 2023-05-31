@@ -1,8 +1,8 @@
-public class Controller {
+import javax.swing.*;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
 
-    private final Gui gui;
-    private final MazeLoader loader;
-    private final MazeSolver solver;
+public record Controller(Gui gui, MazeLoader loader, MazeSolver solver) {
 
     public Controller(Gui gui, MazeLoader loader, MazeSolver solver) {
         this.gui = gui;
@@ -14,32 +14,105 @@ public class Controller {
     private void setButtonListeners() {
         this.gui.setSelectButtonListener(
                 (event) -> this.gui.filePicker(
-                    (file) -> {
-                        var maze = this.loader.loadMaze(file);
-                        System.out.println(maze.length);
-                        System.out.println(maze[0].length);
-                        this.solver.setMaze(maze);
-                        this.gui.displayMaze(this.solver.getMaze());
-                        return null;
-                    }
-        ));
+                        (file) -> {
+                            var maze = this.loader.loadMaze(file);
+                            System.out.println(maze.length);
+                            System.out.println(maze[0].length);
+                            this.solver.setMaze(maze);
+                            this.gui.displayMaze(this.solver.getMaze());
+                            return null;
+                        }
+                ));
 
         this.gui.setAstarButtonListener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), false));
+            var dialog = gui.createDialog("Solving");
+            SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Queue<MazeTraversalStep> doInBackground() {
+                    dialog.timer().start();
+                    return solver.aStar(gui.getStartCoordinate(), gui.getFinishCoordinate(), false);
+                }
+
+                @Override
+                protected void done() {
+                    processDoneTask(dialog, this);
+                }
+            };
+
+            worker.execute();
+            dialog.dialog().setVisible(true);
         });
 
+
         this.gui.setGreedyAstarButtonListener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.aStar(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate(), true));
+            var dialog = gui.createDialog("Solving");
+            SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Queue<MazeTraversalStep> doInBackground() {
+                    dialog.timer().start();
+                    return solver.aStar(gui.getStartCoordinate(), gui.getFinishCoordinate(), true);
+                }
+
+                @Override
+                protected void done() {
+                    processDoneTask(dialog, this);
+                }
+            };
+
+            worker.execute();
+            dialog.dialog().setVisible(true);
         });
 
         this.gui.setDijkstraButtonListener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.dijkstra1(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+            var dialog = gui.createDialog("Solving");
+            SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Queue<MazeTraversalStep> doInBackground() {
+                    dialog.timer().start();
+                    return solver.dijkstra1(gui.getStartCoordinate(), gui.getFinishCoordinate());
+                }
+
+                @Override
+                protected void done() {
+                    processDoneTask(dialog, this);
+                }
+            };
+
+            worker.execute();
+            dialog.dialog().setVisible(true);
         });
+
         this.gui.setDijkstraButton2Listener((event) -> {
-            this.gui.replaySearchProcedure(this.solver.dijkstra2(this.gui.getStartCoordinate(), this.gui.getFinishCoordinate()));
+            var dialog = gui.createDialog("Solving");
+            SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Queue<MazeTraversalStep> doInBackground() {
+                    dialog.timer().start();
+                    return solver.dijkstra2(gui.getStartCoordinate(), gui.getFinishCoordinate());
+                }
+
+                @Override
+                protected void done() {
+                    processDoneTask(dialog, this);
+                }
+            };
+
+            worker.execute();
+            dialog.dialog().setVisible(true);
         });
-        this.gui.setResetMazeButtonListener((event) -> {
-            this.gui.resetMaze();
-        });
+
+        this.gui.setResetMazeButtonListener((event) -> this.gui.resetMaze());
     }
+
+    private void processDoneTask(AnimatedDialog dialog, SwingWorker<Queue<MazeTraversalStep>, Void> worker) {
+        dialog.dialog().dispose();
+        dialog.timer().stop();
+        try {
+            Queue<MazeTraversalStep> path = worker.get();
+            gui.replaySearchProcedure(path);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
