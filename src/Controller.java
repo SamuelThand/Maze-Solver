@@ -16,8 +16,6 @@ public record Controller(Gui gui, MazeLoader loader, MazeSolver solver) {
                 (event) -> this.gui.filePicker(
                         (file) -> {
                             var maze = this.loader.loadMaze(file);
-                            System.out.println(maze.length);
-                            System.out.println(maze[0].length);
                             this.solver.setMaze(maze);
                             this.gui.displayMaze(this.solver.getMaze());
                             return null;
