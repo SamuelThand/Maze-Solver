@@ -25,88 +25,74 @@ public record Controller(Gui gui, MazeLoader loader, MazeSolver solver) {
                 ));
 
         this.gui.setAstarButtonListener((event) -> {
-            var dialog = gui.createDialog("Solving");
             SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Queue<MazeTraversalStep> doInBackground() {
-                    dialog.timer().start();
                     return solver.aStar(gui.getStartCoordinate(), gui.getFinishCoordinate(), false);
                 }
 
                 @Override
                 protected void done() {
-                    processDoneTask(dialog, this);
+                    processDoneTask(this);
                 }
             };
 
             worker.execute();
-            dialog.dialog().setVisible(true);
         });
 
 
         this.gui.setGreedyAstarButtonListener((event) -> {
-            var dialog = gui.createDialog("Solving");
             SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Queue<MazeTraversalStep> doInBackground() {
-                    dialog.timer().start();
                     return solver.aStar(gui.getStartCoordinate(), gui.getFinishCoordinate(), true);
                 }
 
                 @Override
                 protected void done() {
-                    processDoneTask(dialog, this);
+                    processDoneTask(this);
                 }
             };
 
             worker.execute();
-            dialog.dialog().setVisible(true);
         });
 
         this.gui.setDijkstraButtonListener((event) -> {
-            var dialog = gui.createDialog("Solving");
             SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Queue<MazeTraversalStep> doInBackground() {
-                    dialog.timer().start();
                     return solver.dijkstra1(gui.getStartCoordinate(), gui.getFinishCoordinate());
                 }
 
                 @Override
                 protected void done() {
-                    processDoneTask(dialog, this);
+                    processDoneTask(this);
                 }
             };
 
             worker.execute();
-            dialog.dialog().setVisible(true);
         });
 
         this.gui.setDijkstraButton2Listener((event) -> {
-            var dialog = gui.createDialog("Solving");
             SwingWorker<Queue<MazeTraversalStep>, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Queue<MazeTraversalStep> doInBackground() {
-                    dialog.timer().start();
                     return solver.dijkstra2(gui.getStartCoordinate(), gui.getFinishCoordinate());
                 }
 
                 @Override
                 protected void done() {
-                    processDoneTask(dialog, this);
+                    processDoneTask(this);
                 }
             };
 
             worker.execute();
-            dialog.dialog().setVisible(true);
         });
 
         this.gui.setResetMazeButtonListener((event) -> this.gui.resetMaze());
     }
 
-    private void processDoneTask(AnimatedDialog dialog, SwingWorker<Queue<MazeTraversalStep>, Void> worker) {
-        dialog.dialog().dispose();
-        dialog.timer().stop();
+    private void processDoneTask(SwingWorker<Queue<MazeTraversalStep>, Void> worker) {
         try {
             Queue<MazeTraversalStep> path = worker.get();
             gui.replaySearchProcedure(path);
