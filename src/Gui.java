@@ -221,7 +221,7 @@ public class Gui extends JFrame {
                 this.mazePanel.add(button);
             }
 
-        this.unsolvedMaze = maze.clone();
+        this.unsolvedMaze = maze;
         this.mazePanel.validate();
         this.mazePanel.repaint();
     }
