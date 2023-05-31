@@ -15,6 +15,8 @@ public class MazeSolver {
     /**
      * Solve the maze using a greedy/normal version of the A* algorithm.
      *
+     * Time complexity: Worst case = O(N log N), Best case = O(1)
+     *
      * @param start  Where to start in the maze
      * @param goal   Where the goal is in the maze
      * @param greedy Run the algorithm with the priority queue sorted only based on heuristics
@@ -34,20 +36,23 @@ public class MazeSolver {
                 calculateHeuristicsCost(start, goal),
                 Cell.START);
 
-        procedure.put(start, startCell);
-        cellPriorityQueue.add(startCell);
-        while (!cellPriorityQueue.isEmpty()) {
+        procedure.put(start, startCell); // O(1)
+        cellPriorityQueue.add(startCell); // O(1)
+        while (!cellPriorityQueue.isEmpty()) { // O(N)
+
             currentStepNumber++;
-            var currentStep = cellPriorityQueue.poll();
+            var currentStep = cellPriorityQueue.poll(); // O(log N)
             currentStep.setState(Cell.VISITED);
 
-            if (currentStep.getLocation().equals(goal)) { // We found the goal coordinate
+            // We found the goal coordinate
+            if (currentStep.getLocation().equals(goal)) {
                 currentStep.setStepNumber(currentStepNumber);
                 procedure.put(currentStep.getLocation(), currentStep);
                 return parseResult(procedure);
             }
 
-            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // Process all neighbours
+            // Process all neighbours
+            for (Coordinate neighbour : getNeighbours(currentStep.getLocation())) { // O(4)
 
                 if (maze[neighbour.row()][neighbour.col()] == Cell.WALL)
                     continue;
@@ -69,7 +74,7 @@ public class MazeSolver {
 
                     // The neighbour has not been visited, queue it for processing
                     if (!cellPriorityQueue.contains(neighbourCell))
-                        cellPriorityQueue.add(neighbourCell);
+                        cellPriorityQueue.add(neighbourCell); // O(log N)
                 }
             }
         }
@@ -92,12 +97,14 @@ public class MazeSolver {
     /**
      * Parse the results of the algorithm
      *
+     * Time complexity: O(N log N)
+     *
      * @param procedure The search procedure
      * @return Parsed steps of the algorithm
      */
     private LinkedList<MazeTraversalStep> parseResult(Map<Coordinate, MazeTraversalStep> procedure) {
-        var steps = new LinkedList<>(procedure.values());
-        steps.sort(Comparator.comparingInt(MazeTraversalStep::getStepNumber));
+        var steps = new LinkedList<>(procedure.values()); // O(N)
+        steps.sort(Comparator.comparingInt(MazeTraversalStep::getStepNumber)); // O(N log N)
         markCells(steps, procedure);
 
         return steps;
@@ -111,11 +118,11 @@ public class MazeSolver {
      */
     private void markCells(LinkedList<MazeTraversalStep> steps, Map<Coordinate, MazeTraversalStep> procedure) {
         var pathStep = steps.getLast();
-        while (pathStep != null) {
+        while (pathStep != null) { // O(N)
             pathStep.setState(Cell.PATH);
             pathStep = procedure.get(pathStep.getParentLocation());
         }
-        for (MazeTraversalStep step : steps)
+        for (MazeTraversalStep step : steps) // O(N)
             if (step.getState() == Cell.VISITED)
                 step.setState(Cell.DEAD_END);
     }
