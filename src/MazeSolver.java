@@ -1,3 +1,5 @@
+import org.w3c.dom.Node;
+
 import java.util.*;
 
 public class MazeSolver {
@@ -142,7 +144,7 @@ public class MazeSolver {
     /**
      * Dijkstra's algorithm using a priority queue and graph.
      * Time complexity: O((v+e) log v)
-     * Where v is vertices, e is edges, n is the height of the maze and m is the width of the maze.
+     * Where v is vertices, e is edges.
      * @param start  Coordinate to start at
      * @param finish Coordinate to finish at
      * @return A queue containing all steps taken to find the final path and each cell traversed in the final path.
@@ -156,16 +158,17 @@ public class MazeSolver {
         Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
         // PriorityQueue used to keep track of next least expensive path to take.
         Queue<Coordinate> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(a -> distance.getOrDefault(a, Integer.MAX_VALUE)));
-        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze. Time complexity: O(n(n+m))
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // Weighed graph of the maze. Time complexity: O(v)
 
         // Initialize distance to all nodes to infinity, except for start node which is 0
-        // Also add all nodes to the priority queue
         for (Coordinate coordinate : graph.keySet()) { // Time complexity: O(v)
             distance.put(coordinate, coordinate.equals(start) ? 0 : Integer.MAX_VALUE);
-            priorityQueue.offer(coordinate);
+            if (coordinate.equals(start)) {
+                priorityQueue.offer(coordinate);
+            }
         }
 
-        while (!priorityQueue.isEmpty()) { // O(v log v)
+        while (!priorityQueue.isEmpty()) { // O((e+v) log v)
             Coordinate current = priorityQueue.poll(); // O(log v)
             if (markAndStoreStep(start, finish, allSteps, current)) {
                 break;
@@ -181,8 +184,6 @@ public class MazeSolver {
                 if (newDistance < neighborDistance) {
                     distance.put(neighbor, newDistance);
                     previous.put(neighbor, current);
-                    // Distance is changed, update position in queue
-                    priorityQueue.remove(neighbor); // O(v)
                     priorityQueue.offer(neighbor); // O(log v)
                 }
             }
@@ -190,7 +191,7 @@ public class MazeSolver {
 
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
-            connectFinishingPath(finish, allSteps, previous); // Time complexity: O(nm)
+            connectFinishingPath(finish, allSteps, previous); // Time complexity: O(v)
         }
         return allSteps;
     }
@@ -211,7 +212,7 @@ public class MazeSolver {
         Map<Coordinate, Integer> distance = new HashMap<>();
         Map<Coordinate, Coordinate> previous = new HashMap<>(); // Map containing the path taken between nodes
         List<Coordinate> nodeList = new ArrayList<>(); // List containing nodes
-        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // O(n(n+m))
+        HashMap<Coordinate, Node> graph = generateGraph(start, finish); // O(v)
 
         // Initialize distance to all nodes to infinity, except for start node which is 0
         // Also add all nodes to list
@@ -254,7 +255,7 @@ public class MazeSolver {
 
         // Generate final path by backtracking from finish to start
         if (previous.containsKey(finish)) {
-            connectFinishingPath(finish, allSteps, previous); // O(nm)
+            connectFinishingPath(finish, allSteps, previous); // O(v)
         }
         return allSteps;
     }
