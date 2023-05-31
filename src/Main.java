@@ -4,8 +4,8 @@ public class Main {
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
-            var mazeLoader = new MazeLoader(); //TODO Static?
-            var mazeSolver = new MazeSolver(); //TODO Static?
+            var mazeLoader = new MazeLoader();
+            var mazeSolver = new MazeSolver();
             var gui = new Gui(determineFramSize());
             new Controller(gui, mazeLoader, mazeSolver);
             gui.pack();
