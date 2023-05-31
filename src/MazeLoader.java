@@ -103,7 +103,7 @@ public class MazeLoader {
     /**
      * Estimates the wall width by iterating from the edge of the maze and inwards.
      * Starts at 1/7 of the height and iterates every 1/7 + 1 of the height.
-     * Time complexity: O(nm)
+     * Time complexity: O(m)
      * Where n is the height of the maze and m is the width of the maze.
      * @param maze full scale representation of the maze
      * @return estimated wall width
@@ -112,8 +112,10 @@ public class MazeLoader {
         int width = maze[0].length;
         int height = maze.length;
         int wallWidth = 0;
+        int samples = 7;
 
-        for (int i = height / 7; i < height; i += height / 7 + 1) { // Time complexity: O(nm)
+        // Iterates samples - 1 times;
+        for (int i = height / samples; i < height; i += height / samples + 1) { // Time complexity: O(m)
             int currentWidth = 0;
             for (int j = 0; j < width; j++) { // Time complexity: O(m)
                 if (maze[i][j] == Cell.WALL) {
@@ -260,7 +262,7 @@ public class MazeLoader {
         Direction[] directions = {Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP};
 
         // Perform measurements on each side
-        for (int i = 0; i < 4; i++) { // Time complexity: O(n+m)
+        for (int i = 0; i < startCoords.length; i++) { // Time complexity: O(n+m)
             int[] firstMeasurement = findFirstWall(image, directions[i], startCoords[i]); // Time complexity: O(n) or O(m)
             int[] secondMeasurement;
             do { // Time complexity: O(n) or O(m)
